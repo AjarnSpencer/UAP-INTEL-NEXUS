@@ -30,7 +30,7 @@ By fusing real-time **Google Maps Platform** geospatial tracking, **Google Maps 
 ### 100% Client-Side Cryptographic Isolation
 To preserve strict operational security, prevent cross-investigator telemetry surveillance, and eliminate intermediary server exposure, UAP Intel Nexus operates on a strict **Bring Your Own Key (BYOK)** client-side sandbox architecture:
 
-1. **Local Browser Isolation (`localStorage`)**: Your Google Gemini API Key, Google Maps API Key, and Google Workspace OAuth access tokens are preserved solely within your browser session sandbox. Credentials are never sent, logged, or proxied through any external backend server.
+1. **Local Browser Isolation (`localStorage`)**: Your Google Gemini API Key and Google Workspace OAuth access tokens are preserved solely within your browser session sandbox. Credentials are never sent, logged, or proxied through any external backend server.
 2. **Autonomous Dossier Generation & Audio Synthesis**: Multi-persona tactical analyses, declassified search grounding, and Journey TTS voice generation are executed directly between your browser and Google's AI endpoints using your personal quota.
 3. **Instant Revocation & Session Purge**: A single click on the `REVOKE` command header button instantly cleanses all cryptographic keys, cache items, and session tokens from local browser storage.
 4. **Zero-Config Demo Preview Mode**: For rapid briefing evaluations without an immediate API key, an integrated Demo Preview mode allows analysts to inspect declassified historical incidents (USS Nimitz FLIR1, Aguadilla CBP thermal intercept, Gimbal/GoFast tracking, and Andaman maritime anomalies).
@@ -42,16 +42,21 @@ To preserve strict operational security, prevent cross-investigator telemetry su
 
 ## ⚡ COMPLETE FEATURE BREAKDOWN
 
-### 1. Tactical Geospatial Radar Grid (`@vis.gl/react-google-maps`)
-- **Real-Time Incident Plotting**: Interactive dark-mode vector radar grid centering worldwide UAP sightings.
-- **AdvancedMarker Pulse Pins**: Custom animated radar blips identifying incident coordinates with color-coded classification tiers.
-- **Proximity Calculations & Geocoding**: Automatic geodesic range computation (km/miles) from active recon stations to proximate municipal locations.
-- **Tactical Radar Standby**: Resilient fallback UI with direct 1-click Maps Key configuration and error handling (`ApiTargetBlockedMapError` mitigation).
+### 1. Tactical Geospatial Radar & Location Grid (`components/UAPTacticalMap.tsx`)
+- **Real-Time Incident Plotting**: Interactive dark-mode vector radar grid centering worldwide UAP sightings without third-party paid map dependencies.
+- **Zoomed Radar Inspector (2X - 14X)**: Dynamic zoom scale, concentric range rings (scaled in kilometers), azimuth 360° degree perimeter marks, and real-time center coordinate readout.
+- **Tri-Mode Grid Switching**:
+  - **Hybrid Grid**: Satellite terrain composite with glowing tactical coordinate grid, sector outlines, and illuminated contact blips.
+  - **Satellite Grid**: High-resolution photorealistic Earth orbital imagery with range rings and targeting reticle.
+  - **Vector Grid**: High-contrast dark cyber military vector matrix (deep black with glowing emerald green coordinate grid lines, range rings, and azimuth marks).
+- **Interactive Radar Blip Pins**: Pulsing contact nodes color-coded by status (selected target in red, closest proximate vector in yellow, active contacts in green) with hover inspect cards and floating Locked Target Recon panel.
+- **Geodesic Distance & Sector Triangulation**: Live distance calculation in km/miles to any reference point or GPS location.
+- **Hotspot Sectors Quick-Jumper**: Immediate 1-click re-centering to key sectors (Groom Lake / Area 51, San Diego Nimitz, Sedona Vortex, Roswell, Rendlesham, etc.).
 
-### 2. Cinematic 3D Aerial View Flyovers (`services/mapsService.ts`)
-- **Google Maps Aerial View API Integration**: Direct interfacing with photorealistic 3D flyover video rendering endpoints.
-- **Automated Postal Address Geocoding**: Resolves sighting coordinates to high-resolution physical landmarks (e.g., Broadway Pier San Diego, Rafael Hernandez Airport Aguadilla).
-- **Video Handshake & Polling Protocol**: Handles asynchronous video states (`PROCESSING`, `ACTIVE`, `ERROR`) with interactive preview playback and full-screen telemetry inspection.
+### 2. Nano Banana Pro Photographic Cinematic Image Generator (`services/geminiService.ts`)
+- **Multi-Model Cascade**: Powered by **Nano Banana Pro (`gemini-3-pro-image`)** with automatic fallback cascade to `gemini-3.1-flash-image`, `gemini-3.1-flash-lite-image`, `imagen-3.0-generate-002`, and procedural forensic simulation.
+- **35mm Optical Photographic Surveillance Style**: Synthesizes highly realistic photographic frames matching the reported anomalous vehicle's morphology, ionization glow, atmospheric scattering, and eyewitness lighting conditions.
+- **Direct Asset Downloads**: 1-click buttons to download the generated photographic image (`.png`) and the satellite reconnaissance image (`.jpg`).
 
 ### 3. Multimodal Gemini Tactical Intelligence Dossier Engine
 - **Search-Grounded Intelligence**: Live querying with Google Search Grounding to aggregate newly declassified releases and maritime advisories.
@@ -62,11 +67,13 @@ To preserve strict operational security, prevent cross-investigator telemetry su
   - **Whistleblower / Black-Budget**: Deep-state compartmentalization, special access programs (SAP), reverse-engineering speculation, and secrecy enforcement history.
 
 ### 4. Neural Audio Briefings & Voice Synthesis (`services/geminiService.ts`)
+- **Full Narrative Vocalization**: Seamless speech generation without arbitrary 800-character cutoffs or screeching double-headers.
 - **Journey Neural Voices**: High-fidelity speech generation featuring eight distinct military and briefing personas (`Fenrir`, `Kore`, `Charon`, `Aoede`, `Zephyr`, `Puck`, `Leda`, `Orus`).
 - **Real-Time Audio Player**: In-browser waveform playback controls with scrubbing, voice selector, speed tuning, and 1-click `.wav` mission download.
 
-### 5. Generative Visual Reconstruction (`Imagen 3 / Gemini`)
-- **Photorealistic Telemetry Synthesis**: Generates forensic visual reconstructions of anomalous vehicles based on witness testimony, thermal sensor signatures, and environmental lighting conditions.
+### 5. Verified Real Markdown & PDF Dossier Downloads
+- **Download `.MD`**: Generates and downloads a clean, verified Markdown document (`.md`) formatted with classification blocks, executive summaries, coordinates, and forensic briefing text.
+- **Download `.PDF`**: Implemented using `jsPDF` to compile a Top Secret UAP dossier with classification banners, metadata grid, auto-page breaks, embedded optical photograph, and NOFORN archive footers.
 
 ### 6. Google Workspace Google Docs Synchronization (`services/googleDocsService.ts`)
 - **Client-Side Google OAuth**: Secure authentication requesting strictly scoped permissions (`documents`, `drive.file`) without server secrets.

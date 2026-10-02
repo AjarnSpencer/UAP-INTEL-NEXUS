@@ -3,6 +3,7 @@
   "appId": "1:594226924032:web:626c0a91c0d837bae626e5",
   "apiKey": "AIzaSyC1T2MTxyb6QP1gXVeSrl9huGcZ5NXMgDo",
   "authDomain": "tts-polyglot-narrative.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-uapintelnexus-d00744e3-6796-46f5-a1d7-c9b1e7815a8e",
   "storageBucket": "tts-polyglot-narrative.firebasestorage.app",
   "messagingSenderId": "594226924032",
   "measurementId": "",

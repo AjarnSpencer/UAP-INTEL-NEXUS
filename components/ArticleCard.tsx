@@ -1,16 +1,14 @@
-
 import React from 'react';
 import type { Article } from '../types';
-import { Eye, Film, MapPin } from 'lucide-react';
+import { Eye, MapPin } from 'lucide-react';
 import IntelIcon from './IntelIcon';
 
 interface ArticleCardProps {
   article: Article;
   onAnalyze: (article: Article) => void;
-  onLaunchFlyover?: (article: Article) => void;
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({ article, onAnalyze, onLaunchFlyover }) => {
+const ArticleCard: React.FC<ArticleCardProps> = ({ article, onAnalyze }) => {
   return (
     <div className="bg-gray-800/40 border border-green-800/30 rounded-lg overflow-hidden backdrop-blur-sm hover:border-green-500/50 transition-all duration-300 group flex flex-col h-full shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
       {/* Icon Area instead of Thumbnail */}
@@ -45,20 +43,9 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, onAnalyze, onLaunchF
         )}
         
         <div className="mt-auto pt-4 border-t border-green-900/20 flex items-center gap-2">
-          {onLaunchFlyover && (
-            <button
-              onClick={() => onLaunchFlyover(article)}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-black/60 text-green-400 font-bold rounded hover:bg-green-600 hover:text-black transition-all duration-300 uppercase text-[11px] tracking-[0.15em] border border-green-800/60 hover:border-green-400 font-mono"
-              title="Launch Cinematic Aerial Flyover Video"
-            >
-              <Film size={13} />
-              Flyover
-            </button>
-          )}
-
           <button
             onClick={() => onAnalyze(article)}
-            className={`${onLaunchFlyover ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 px-4 py-2 bg-green-900/20 text-green-400 font-bold rounded hover:bg-green-500 hover:text-black transition-all duration-300 uppercase text-xs tracking-[0.2em] border border-green-900/50 hover:border-green-400 shadow-[inset_0_0_10px_rgba(34,197,94,0.05)] font-mono`}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-900/20 text-green-400 font-bold rounded hover:bg-green-500 hover:text-black transition-all duration-300 uppercase text-xs tracking-[0.2em] border border-green-900/50 hover:border-green-400 shadow-[inset_0_0_10px_rgba(34,197,94,0.05)] font-mono"
           >
             <Eye size={14} />
             Analyze Signal

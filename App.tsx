@@ -1,15 +1,12 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchNews } from './services/newsService';
-import { Article, VoiceID, UAPCoordinates } from './types';
+import { Article, VoiceID } from './types';
 import ArticleCard from './components/ArticleCard';
 import AnalysisModal from './components/AnalysisModal';
 import ApiKeyModal from './components/ApiKeyModal';
 import LoadingSpinner from './components/LoadingSpinner';
 import AjarnSpencerCredit from './components/AjarnSpencerCredit';
 import UAPTacticalMap from './components/UAPTacticalMap';
-import AerialFlyoverViewer from './components/AerialFlyoverViewer';
-import MapsConfigModal from './components/MapsConfigModal';
 import GoogleDocsModal from './components/GoogleDocsModal';
 import { 
   RefreshCw, 
@@ -17,30 +14,22 @@ import {
   Globe, 
   ChevronLeft, 
   ChevronRight, 
-  List, 
   LogOut, 
-  ShieldCheck, 
-  Lock,
-  Map as MapIcon,
+  Radar,
   LayoutGrid,
   Columns,
-  Film,
-  Compass,
   FileText,
-  Key,
-  Sparkles
+  Key
 } from 'lucide-react';
 
 const VOICES: VoiceID[] = ['Fenrir', 'Kore', 'Charon', 'Aoede', 'Zephyr', 'Puck', 'Leda', 'Orus'];
 const PAGE_SIZE_OPTIONS = [9, 18, 27, 45, 99];
 const STORAGE_KEY = 'UAP_NEXUS_KEY';
-const MAPS_STORAGE_KEY = 'UAP_MAPS_KEY';
 
 type ViewMode = 'map' | 'cards' | 'split';
 
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const [mapsKey, setMapsKey] = useState<string>('');
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
@@ -51,12 +40,6 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('map');
 
   // Modals State
-  const [isFlyoverOpen, setIsFlyoverOpen] = useState<boolean>(false);
-  const [flyoverArticle, setFlyoverArticle] = useState<Article | null>(null);
-  const [flyoverAddress, setFlyoverAddress] = useState<string | undefined>(undefined);
-  const [flyoverCoords, setFlyoverCoords] = useState<UAPCoordinates | undefined>(undefined);
-
-  const [isMapsConfigOpen, setIsMapsConfigOpen] = useState<boolean>(false);
   const [isDocsModalOpen, setIsDocsModalOpen] = useState<boolean>(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
 
@@ -64,16 +47,11 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(9);
 
-  // Initialize Keys
+  // Initialize BYOK Key
   useEffect(() => {
     const storedKey = localStorage.getItem(STORAGE_KEY);
     if (storedKey) {
       setApiKey(storedKey);
-    }
-
-    const storedMapsKey = localStorage.getItem(MAPS_STORAGE_KEY) || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || '';
-    if (storedMapsKey) {
-      setMapsKey(storedMapsKey);
     }
   }, []);
 
@@ -82,19 +60,11 @@ const App: React.FC = () => {
     setApiKey(key);
   };
 
-  const handleSaveMapsKey = (key: string) => {
-    localStorage.setItem(MAPS_STORAGE_KEY, key);
-    setMapsKey(key);
-  };
-
   const handleClearKey = () => {
     localStorage.removeItem(STORAGE_KEY);
     setApiKey(null);
     setArticles([]);
   };
-
-  // Google Maps Platform key should only come from dedicated maps key or env, NOT Gemini key
-  const effectiveMapsKey = mapsKey || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || '';
 
   const loadIntel = useCallback(async () => {
     if (!apiKey) return;
@@ -131,24 +101,6 @@ const App: React.FC = () => {
 
   const closeModal = () => {
     setSelectedArticle(null);
-  };
-
-  const handleLaunchFlyover = (article: Article) => {
-    setFlyoverArticle(article);
-    setFlyoverAddress(article.proximateAddress);
-    setFlyoverCoords(article.coordinates);
-    setIsFlyoverOpen(true);
-  };
-
-  const handleLaunchQuickFlyover = () => {
-    if (articles.length > 0) {
-      handleLaunchFlyover(selectedArticle || articles[0]);
-    } else {
-      setFlyoverArticle(null);
-      setFlyoverAddress('600 Montgomery St, San Francisco, CA 94111, USA');
-      setFlyoverCoords({ lat: 37.7952, lng: -122.4028 });
-      setIsFlyoverOpen(true);
-    }
   };
 
   // Pagination Logic
@@ -203,15 +155,6 @@ const App: React.FC = () => {
                 Google Docs
               </button>
 
-              <button
-                onClick={() => setIsMapsConfigOpen(true)}
-                className="text-green-600 hover:text-green-300 transition-colors flex items-center gap-1 text-[9px] uppercase tracking-[0.2em] font-bold border border-green-900/40 hover:border-green-600 px-2.5 py-1 rounded bg-black/40"
-                title="Configure Google Maps Platform Key / Demo Key"
-              >
-                <MapIcon size={10} />
-                Maps Config
-              </button>
-
               <button 
                  onClick={handleClearKey}
                  className="text-green-900 hover:text-red-500 transition-colors flex items-center gap-1 text-[9px] uppercase tracking-[0.2em] font-bold border border-green-900/30 hover:border-red-900/50 px-2.5 py-1 rounded group"
@@ -235,7 +178,7 @@ const App: React.FC = () => {
           <p className="text-emerald-400/70 tracking-[0.4em] text-xs uppercase font-bold">Clearance Level: Top Secret // Ajarn Spencer Littlewood</p>
         </header>
 
-        {/* Tactical View Mode Switcher & Quick Recon HUD Bar */}
+        {/* Tactical View Mode Switcher */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-black/70 p-3 sm:p-4 rounded-xl border border-green-800/40 backdrop-blur-md shadow-lg">
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-green-700 uppercase font-bold tracking-widest hidden sm:inline">
@@ -250,7 +193,7 @@ const App: React.FC = () => {
                     : 'text-green-500 hover:text-green-300'
                 }`}
               >
-                <MapIcon size={12} />
+                <Radar size={12} />
                 Tactical Radar
               </button>
               <button
@@ -278,15 +221,10 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Launch Aerial Recon Flyover */}
-          <button
-            onClick={handleLaunchQuickFlyover}
-            className="flex items-center gap-2 px-4 py-2 bg-green-950/80 hover:bg-green-500 hover:text-black text-green-400 border border-green-600 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(34,197,94,0.2)] font-mono"
-            title="Launch Cinematic Aerial 3D Flyover for Proximate UAP Coordinates"
-          >
-            <Film size={14} className="animate-pulse" />
-            <span>Launch Cinematic Aerial Flyover</span>
-          </button>
+          <div className="text-[10px] text-green-500 font-bold uppercase tracking-wider flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span>RADAR SENSORS: ONLINE</span>
+          </div>
         </div>
 
         {/* Control Panel */}
@@ -318,13 +256,15 @@ const App: React.FC = () => {
                 {/* Items Per Page Selector */}
                 <div className="flex items-center gap-3">
                     <label className="text-green-400 text-sm font-bold uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
-                        <List size={18} />
-                        Density:
+                        Display:
                     </label>
                     <div className="relative">
-                        <select 
+                        <select
                             value={itemsPerPage}
-                            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                            onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                            }}
                             className="appearance-none bg-black/50 border border-green-700 text-green-400 px-4 py-2 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-green-500 font-mono w-24 hover:bg-black/70 transition-colors cursor-pointer"
                         >
                             {PAGE_SIZE_OPTIONS.map(size => (
@@ -341,17 +281,17 @@ const App: React.FC = () => {
             <button
                 onClick={loadIntel}
                 disabled={isLoading}
-                className="flex items-center gap-2 px-6 py-2 bg-green-900/30 text-green-400 border border-green-600 font-bold rounded hover:bg-green-500 hover:text-black focus:outline-none focus:ring-2 focus:ring-green-500 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(34,197,94,0.2)] hover:shadow-[0_0_25px_rgba(34,197,94,0.4)]"
+                className="w-full lg:w-auto flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 text-black font-bold py-2.5 px-6 rounded transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-widest shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] cursor-pointer"
             >
-                <RefreshCw className={isLoading ? 'animate-spin' : ''} size={18} />
-                {isLoading ? 'Decrypting...' : 'Initiate Scan'}
+                <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+                <span>{isLoading ? 'Decrypting...' : 'Scan Grid'}</span>
             </button>
         </div>
 
         {isLoading ? (
           <div className="flex flex-col justify-center items-center h-64 gap-4">
             <LoadingSpinner />
-            <p className="text-green-500/80 animate-pulse font-mono text-xs uppercase tracking-[0.4em]">SCANNING GLOBAL FREQUENCIES...</p>
+            <p className="text-green-500/80 animate-pulse font-mono text-xs uppercase tracking-[0.4em]">SCANNING GLOBAL RADAR FREQUENCIES...</p>
           </div>
         ) : error ? (
           <div className="text-center text-red-400 bg-red-900/10 border border-red-900/50 p-8 rounded-lg max-w-2xl mx-auto">
@@ -360,17 +300,14 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-10">
-            {/* Interactive Google Map Radar Grid View (Shown in 'map' or 'split' mode) */}
+            {/* Tactical Radar Grid View (Shown in 'map' or 'split' mode) */}
             {(viewMode === 'map' || viewMode === 'split') && (
               <div className="space-y-3">
                 <UAPTacticalMap
-                  apiKey={effectiveMapsKey}
                   articles={articles}
                   selectedArticle={selectedArticle}
                   onSelectArticle={setSelectedArticle}
-                  onLaunchFlyover={handleLaunchFlyover}
                   onOpenDossier={handleOpenDossier}
-                  onOpenMapsConfig={() => setIsMapsConfigOpen(true)}
                 />
               </div>
             )}
@@ -393,7 +330,6 @@ const App: React.FC = () => {
                       key={article.id} 
                       article={article} 
                       onAnalyze={handleOpenDossier}
-                      onLaunchFlyover={handleLaunchFlyover} 
                     />
                   ))}
                 </div>
@@ -448,7 +384,6 @@ const App: React.FC = () => {
           article={selectedArticle}
           voiceId={selectedVoice}
           apiKey={apiKey}
-          onLaunchFlyover={handleLaunchFlyover}
           onOpenDocsArchive={() => setIsDocsModalOpen(true)}
         />
       )}
@@ -468,25 +403,6 @@ const App: React.FC = () => {
           onClearKey={handleClearKey}
         />
       )}
-
-      {/* Cinematic Aerial Flyover Recon Modal */}
-      <AerialFlyoverViewer
-        isOpen={isFlyoverOpen}
-        onClose={() => setIsFlyoverOpen(false)}
-        targetAddress={flyoverAddress}
-        targetCoordinates={flyoverCoords}
-        article={flyoverArticle}
-        apiKey={effectiveMapsKey}
-        onOpenDossier={handleOpenDossier}
-      />
-
-      {/* Google Maps Platform API Key Config Modal */}
-      <MapsConfigModal
-        isOpen={isMapsConfigOpen}
-        onClose={() => setIsMapsConfigOpen(false)}
-        currentMapsKey={mapsKey}
-        onSaveMapsKey={handleSaveMapsKey}
-      />
 
       <AjarnSpencerCredit />
     </div>

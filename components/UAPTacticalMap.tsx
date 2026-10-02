@@ -1,115 +1,61 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-  APIProvider, 
-  Map, 
-  AdvancedMarker, 
-  Pin, 
-  InfoWindow, 
-  useMap 
-} from '@vis.gl/react-google-maps';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Article, HotspotZone, UAPCoordinates } from '../types';
-import { GMP_ATTRIBUTION_ID, UAP_HOTSPOTS, calculateHaversineDistance } from '../services/mapsService';
+import { UAP_HOTSPOTS, calculateHaversineDistance } from '../services/mapsService';
 import { 
   Compass, 
   Crosshair, 
-  Eye, 
-  Film, 
-  Globe, 
-  Layers, 
   Locate, 
-  MapPin, 
-  Navigation, 
   Radio, 
   Radar, 
-  Satellite, 
   ShieldAlert, 
-  Sparkles, 
   Target,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  X,
+  Navigation,
+  Layers,
+  MapPin,
+  RotateCcw
 } from 'lucide-react';
 
 interface UAPTacticalMapProps {
-  apiKey: string;
   articles: Article[];
   selectedArticle: Article | null;
   onSelectArticle: (article: Article) => void;
-  onLaunchFlyover: (article: Article) => void;
   onOpenDossier: (article: Article) => void;
-  onOpenMapsConfig?: () => void;
 }
 
-// Map Controller for smooth fly-to animations
-const MapController: React.FC<{
-  targetCoords: UAPCoordinates | null;
-  zoomLevel: number;
-}> = ({ targetCoords, zoomLevel }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || !targetCoords) return;
-    map.panTo(targetCoords);
-    map.setZoom(zoomLevel);
-  }, [map, targetCoords, zoomLevel]);
-
-  return null;
-};
+type RadarGridType = 'hybrid' | 'satellite' | 'vector';
 
 const UAPTacticalMap: React.FC<UAPTacticalMapProps> = ({
-  apiKey,
   articles,
   selectedArticle,
   onSelectArticle,
-  onLaunchFlyover,
   onOpenDossier,
-  onOpenMapsConfig,
 }) => {
-  const [mapCenter, setMapCenter] = useState<UAPCoordinates>({ lat: 37.0902, lng: -95.7129 }); // Geographic center of US
+  const [mapCenter, setMapCenter] = useState<UAPCoordinates>({ lat: 37.0902, lng: -95.7129 });
   const [mapZoom, setMapZoom] = useState<number>(4);
   const [activeMarkerArticle, setActiveMarkerArticle] = useState<Article | null>(null);
   const [userLocation, setUserLocation] = useState<UAPCoordinates | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<HotspotZone | null>(null);
-  const [mapType, setMapType] = useState<'hybrid' | 'roadmap' | 'satellite'>('hybrid');
+  const [gridType, setGridType] = useState<RadarGridType>('hybrid');
   const [locatingUser, setLocatingUser] = useState<boolean>(false);
-  const [filterNearbyCount, setFilterNearbyCount] = useState<number>(5);
-  const [authError, setAuthError] = useState<string | null>(null);
+  
+  // Tactical Radar Drag/Pan State
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const radarContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Catch Maps authentication failure or blocked API target errors
-  useEffect(() => {
-    const handleAuthFailure = () => {
-      setAuthError('ApiTargetBlockedMapError: The Google Maps JavaScript API is blocked or not enabled for this API key in Google Cloud Console.');
-    };
-    (window as any).gm_authFailure = handleAuthFailure;
-
-    const originalConsoleError = console.error;
-    console.error = (...args: any[]) => {
-      originalConsoleError.apply(console, args);
-      const str = args.map(a => String(a)).join(' ');
-      if (str.includes('ApiTargetBlockedMapError') || str.includes('ApiNotActivatedMapError') || str.includes('api-target-blocked-map-error')) {
-        setAuthError('ApiTargetBlockedMapError: Maps JavaScript API is not enabled on this Google Cloud project or is restricted.');
-      }
-    };
-
-    return () => {
-      (window as any).gm_authFailure = null;
-    };
-  }, []);
-
-  // Clear auth error if apiKey changes
-  useEffect(() => {
-    setAuthError(null);
-  }, [apiKey]);
-
-  // Focus on selected article if provided
+  // Focus on selected article when updated
   useEffect(() => {
     if (selectedArticle && selectedArticle.coordinates) {
       setMapCenter(selectedArticle.coordinates);
-      setMapZoom(9);
+      setMapZoom(7);
       setActiveMarkerArticle(selectedArticle);
     }
   }, [selectedArticle]);
 
-  // Request browser geolocation for proximity calculation
+  // Handle GPS location
   const handleLocateUser = () => {
     if (!navigator.geolocation) return;
     setLocatingUser(true);
@@ -133,37 +79,36 @@ const UAPTacticalMap: React.FC<UAPTacticalMapProps> = ({
     );
   };
 
-  // Determine current reference point for proximity calculations
+  const handleResetCenter = () => {
+    setMapCenter({ lat: 37.0902, lng: -95.7129 });
+    setMapZoom(4);
+    setSelectedHotspot(null);
+  };
+
+  // Determine current reference point for distance calculations
   const referencePoint: UAPCoordinates = useMemo(() => {
     if (userLocation) return userLocation;
     if (selectedHotspot) return selectedHotspot.coordinates;
     if (selectedArticle && selectedArticle.coordinates) return selectedArticle.coordinates;
-    return { lat: 37.0902, lng: -95.7129 }; // Default US center
-  }, [userLocation, selectedHotspot, selectedArticle]);
+    return mapCenter;
+  }, [userLocation, selectedHotspot, selectedArticle, mapCenter]);
 
-  // Calculate distance for all articles relative to current reference point and sort
+  // Proximate reports calculation
   const proximateArticles = useMemo(() => {
-    const list = articles.map((art) => {
-      const coords = art.coordinates || { lat: 37.0902, lng: -95.7129 };
-      const dist = calculateHaversineDistance(referencePoint, coords);
-      return {
-        ...art,
-        distanceKm: dist.km,
-        distanceMiles: dist.miles,
-      };
-    });
-
-    return list.sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
+    return articles
+      .map((art) => {
+        const coords = art.coordinates || { lat: 37.0902, lng: -95.7129 };
+        const dist = calculateHaversineDistance(referencePoint, coords);
+        return {
+          ...art,
+          distanceKm: dist.km,
+          distanceMiles: dist.miles,
+        };
+      })
+      .sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
   }, [articles, referencePoint]);
 
   const closestReport = proximateArticles[0] || null;
-
-  const handleSelectHotspotSector = (hotspot: HotspotZone) => {
-    setSelectedHotspot(hotspot);
-    setUserLocation(null);
-    setMapCenter(hotspot.coordinates);
-    setMapZoom(8);
-  };
 
   const handleMarkerClick = (art: Article) => {
     setActiveMarkerArticle(art);
@@ -173,458 +118,459 @@ const UAPTacticalMap: React.FC<UAPTacticalMapProps> = ({
     }
   };
 
+  const handleSelectHotspotSector = (hotspot: HotspotZone) => {
+    setSelectedHotspot(hotspot);
+    setUserLocation(null);
+    setMapCenter(hotspot.coordinates);
+    setMapZoom(7);
+  };
+
+  // Tactical Radar Pan Handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !dragStart) return;
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    
+    // Scale movement to coordinate delta based on zoom
+    const factor = 360 / (Math.pow(2, mapZoom) * 400);
+    setMapCenter((prev) => ({
+      lat: Math.max(-85, Math.min(85, prev.lat + dy * factor)),
+      lng: prev.lng - dx * factor,
+    }));
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDragStart(null);
+  };
+
+  // Project lat/lng coordinates to percentage on zoomed tactical radar surface
+  const getProjectedPosition = (coords?: UAPCoordinates) => {
+    if (!coords) return { left: '50%', top: '50%', visible: false };
+    const lngSpan = 360 / Math.pow(2, mapZoom - 1);
+    const latSpan = 180 / Math.pow(2, mapZoom - 1);
+
+    const xPercent = 50 + ((coords.lng - mapCenter.lng) / lngSpan) * 100;
+    const yPercent = 50 - ((coords.lat - mapCenter.lat) / latSpan) * 100;
+
+    const visible = xPercent >= -15 && xPercent <= 115 && yPercent >= -15 && yPercent <= 115;
+    return { left: `${xPercent}%`, top: `${yPercent}%`, visible };
+  };
+
+  // Standby / Tactical Radar backdrop texture based on active gridType
+  const getRadarBackdropStyle = (): React.CSSProperties => {
+    if (gridType === 'satellite') {
+      return {
+        backgroundImage: 'radial-gradient(circle at center, rgba(3, 15, 8, 0.2) 0%, rgba(2, 6, 4, 0.9) 100%), url(https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1600&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    }
+    if (gridType === 'hybrid') {
+      return {
+        backgroundImage: 'radial-gradient(circle at center, rgba(6, 78, 59, 0.3) 0%, rgba(2, 6, 4, 0.94) 100%), url(https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1600&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    }
+    // Vector Mode: Deep pitch black with tactical neon phosphor matrix
+    return {
+      background: 'radial-gradient(ellipse at center, #062414 0%, #010804 100%)',
+    };
+  };
+
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full h-[850px] max-h-[85vh] font-mono">
-      {/* Interactive Google Map Canvas */}
+    <div className="flex flex-col xl:flex-row gap-6 w-full h-[850px] max-h-[88vh] font-mono select-none">
+      
+      {/* Primary Radar Operations Deck */}
       <div className="flex-1 relative rounded-xl overflow-hidden border border-green-800/60 bg-black flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.8)]">
-        {/* Top Tactical Map HUD Bar */}
-        <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-          <div className="bg-black/85 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-green-800/80 pointer-events-auto flex items-center gap-2 shadow-lg">
-            <Radar className="text-green-400 animate-spin" size={16} />
-            <span className="text-[11px] font-black uppercase tracking-[0.25em] text-green-400">
-              GLOBAL TACTICAL RADAR GRID
+        
+        {/* Top Tactical Radar HUD Bar */}
+        <div className="absolute top-3 left-3 right-3 z-30 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+          
+          {/* Status Badge */}
+          <div className="bg-black/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-green-800/80 pointer-events-auto flex items-center gap-2 shadow-xl">
+            <Radar className="text-green-400 animate-spin" size={15} />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-green-400">
+              TACTICAL RADAR & LOCATION GRID
             </span>
             <span className="text-[9px] text-green-600 border-l border-green-900/60 pl-2">
               TARGETS: {articles.length}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 pointer-events-auto">
-            {/* Map Type Switcher */}
-            <div className="bg-black/85 backdrop-blur-md p-1 rounded-lg border border-green-800/80 flex items-center gap-1 shadow-lg text-[10px]">
+          <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
+            {/* Grid Type Switcher */}
+            <div className="bg-black/90 backdrop-blur-md p-1 rounded-lg border border-green-800/80 flex items-center gap-1 shadow-lg text-[9px]">
               <button
-                onClick={() => setMapType('hybrid')}
-                className={`px-2 py-1 rounded uppercase font-bold transition-all ${
-                  mapType === 'hybrid'
-                    ? 'bg-green-600 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                    : 'text-green-500 hover:text-green-300'
+                onClick={() => setGridType('hybrid')}
+                className={`px-2.5 py-1 rounded font-bold uppercase transition-all ${
+                  gridType === 'hybrid'
+                    ? 'bg-green-600 text-black shadow-[0_0_10px_rgba(34,197,94,0.5)]'
+                    : 'text-green-500 hover:text-green-200'
                 }`}
+                title="Satellite Composite with Tactical Coordinates Grid"
               >
-                Hybrid
+                Hybrid Grid
               </button>
               <button
-                onClick={() => setMapType('satellite')}
-                className={`px-2 py-1 rounded uppercase font-bold transition-all ${
-                  mapType === 'satellite'
-                    ? 'bg-green-600 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                    : 'text-green-500 hover:text-green-300'
+                onClick={() => setGridType('satellite')}
+                className={`px-2.5 py-1 rounded font-bold uppercase transition-all ${
+                  gridType === 'satellite'
+                    ? 'bg-green-600 text-black shadow-[0_0_10px_rgba(34,197,94,0.5)]'
+                    : 'text-green-500 hover:text-green-200'
                 }`}
+                title="High-Resolution Orbital Satellite Earth Layer"
               >
                 Satellite
               </button>
               <button
-                onClick={() => setMapType('roadmap')}
-                className={`px-2 py-1 rounded uppercase font-bold transition-all ${
-                  mapType === 'roadmap'
-                    ? 'bg-green-600 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                    : 'text-green-500 hover:text-green-300'
+                onClick={() => setGridType('vector')}
+                className={`px-2.5 py-1 rounded font-bold uppercase transition-all ${
+                  gridType === 'vector'
+                    ? 'bg-green-600 text-black shadow-[0_0_10px_rgba(34,197,94,0.5)]'
+                    : 'text-green-500 hover:text-green-200'
                 }`}
+                title="Deep Phosphor Military Vector Matrix"
               >
-                Vector
+                Vector Grid
               </button>
             </div>
 
-            {/* GPS Locate User */}
+            {/* Zoom Controls */}
+            <div className="bg-black/90 backdrop-blur-md p-1 rounded-lg border border-green-800/80 flex items-center gap-1 shadow-lg text-green-400">
+              <button
+                onClick={() => setMapZoom((z) => Math.min(z + 1, 14))}
+                className="p-1 hover:bg-green-900/50 rounded"
+                title="Zoom In Radar"
+              >
+                <ZoomIn size={14} />
+              </button>
+              <span className="text-[9px] font-bold px-1 text-green-300">
+                {mapZoom}X
+              </span>
+              <button
+                onClick={() => setMapZoom((z) => Math.max(z - 1, 2))}
+                className="p-1 hover:bg-green-900/50 rounded"
+                title="Zoom Out Radar"
+              >
+                <ZoomOut size={14} />
+              </button>
+            </div>
+
+            {/* Reset View */}
+            <button
+              onClick={handleResetCenter}
+              className="bg-black/90 backdrop-blur-md hover:bg-green-900/50 p-1.5 rounded-lg border border-green-800/80 text-green-400 hover:text-green-200 transition-all shadow-lg"
+              title="Reset Radar Center to North America"
+            >
+              <RotateCcw size={13} />
+            </button>
+
+            {/* GPS Proximity Lock */}
             <button
               onClick={handleLocateUser}
               disabled={locatingUser}
-              className="bg-black/85 backdrop-blur-md hover:bg-green-900/50 p-2 rounded-lg border border-green-800/80 text-green-400 hover:text-green-200 transition-all flex items-center gap-1.5 text-[10px] uppercase font-bold shadow-lg"
+              className="bg-black/90 backdrop-blur-md hover:bg-green-900/50 px-2.5 py-1.5 rounded-lg border border-green-800/80 text-green-400 hover:text-green-200 transition-all flex items-center gap-1.5 text-[9px] uppercase font-bold shadow-lg"
               title="Lock Proximity to My GPS Coordinates"
             >
-              <Locate size={14} className={locatingUser ? 'animate-spin' : ''} />
-              <span className="hidden sm:inline">Lock GPS Proximity</span>
+              <Locate size={13} className={locatingUser ? 'animate-spin' : ''} />
+              <span className="hidden sm:inline">GPS Lock</span>
             </button>
           </div>
         </div>
 
-        {/* Google Map Container with mandated styling and height */}
-        <div className="w-full h-full relative" style={{ minHeight: '600px' }}>
-          {apiKey && !authError ? (
-            <APIProvider apiKey={apiKey} solutionChannel={GMP_ATTRIBUTION_ID}>
-              <Map
-                mapId="DEMO_MAP_ID"
-                center={mapCenter}
-                zoom={mapZoom}
-                mapTypeId={mapType}
-                gestureHandling="greedy"
-                disableDefaultUI={false}
-                internalUsageAttributionIds={[GMP_ATTRIBUTION_ID]}
-                className="w-full h-full"
-                style={{ width: '100%', height: '100%' }}
-              >
-                <MapController targetCoords={mapCenter} zoomLevel={mapZoom} />
-
-                {/* Advanced Markers for each UAP report */}
-                {articles.map((art, idx) => {
-                  const coords = art.coordinates || { lat: 37.0902, lng: -95.7129 };
-                  const isSelected = selectedArticle?.id === art.id;
-                  const isClosest = closestReport?.id === art.id;
-
-                  return (
-                    <AdvancedMarker
-                      key={art.id}
-                      position={coords}
-                      onClick={() => handleMarkerClick(art)}
-                      title={art.title}
-                    >
-                      <div className="relative group cursor-pointer">
-                        {/* Tactical Ping Effect */}
-                        <div
-                          className={`absolute -inset-2 rounded-full opacity-75 animate-ping ${
-                            isSelected
-                              ? 'bg-red-500'
-                              : isClosest
-                              ? 'bg-yellow-400'
-                              : 'bg-green-500'
-                          }`}
-                        />
-                        <div
-                          className={`relative px-2 py-1 rounded-md border flex items-center gap-1 shadow-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-md transition-transform group-hover:scale-110 ${
-                            isSelected
-                              ? 'bg-red-950/90 border-red-500 text-red-300'
-                              : isClosest
-                              ? 'bg-yellow-950/90 border-yellow-400 text-yellow-300'
-                              : 'bg-black/85 border-green-600 text-green-400'
-                          }`}
-                        >
-                          <Radio size={10} className="animate-pulse" />
-                          <span className="max-w-[120px] truncate">
-                            {isClosest ? 'PROXIMATE #1' : `UAP-${idx + 1}`}
-                          </span>
-                        </div>
-                      </div>
-                    </AdvancedMarker>
-                  );
-                })}
-
-                {/* User / Hotspot Reference Pin */}
-                {userLocation && (
-                  <AdvancedMarker position={userLocation} title="Your GPS Location">
-                    <div className="p-1.5 bg-blue-600 text-white rounded-full border-2 border-white shadow-lg animate-pulse">
-                      <Crosshair size={16} />
-                    </div>
-                  </AdvancedMarker>
-                )}
-
-                {/* InfoWindow for active clicked marker */}
-                {activeMarkerArticle && activeMarkerArticle.coordinates && (
-                  <InfoWindow
-                    position={activeMarkerArticle.coordinates}
-                    onCloseClick={() => setActiveMarkerArticle(null)}
-                  >
-                    <div className="p-2 max-w-xs font-mono text-gray-900">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <ShieldAlert size={14} className="text-red-600" />
-                        <span className="text-[9px] font-bold text-red-600 uppercase tracking-widest">
-                          UAP SIGHTING VECTOR
-                        </span>
-                      </div>
-                      <h4 className="text-xs font-bold leading-tight uppercase mb-1">
-                        {activeMarkerArticle.title}
-                      </h4>
-                      <p className="text-[10px] text-gray-700 line-clamp-2 mb-2 font-sans">
-                        {activeMarkerArticle.description}
-                      </p>
-
-                      <div className="bg-gray-100 p-1.5 rounded border border-gray-300 text-[9px] space-y-0.5 mb-3">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">SECTOR:</span>
-                          <span className="font-bold">{activeMarkerArticle.location || 'Tactical Sector'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">PROXIMITY:</span>
-                          <span className="font-bold text-green-700">
-                            {activeMarkerArticle.distanceKm ? `${activeMarkerArticle.distanceKm} km (${activeMarkerArticle.distanceMiles} mi)` : 'Calculating...'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <button
-                          onClick={() => onLaunchFlyover(activeMarkerArticle)}
-                          className="w-full py-1.5 bg-green-700 hover:bg-green-800 text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow transition-colors"
-                        >
-                          <Film size={12} />
-                          Cinematic Aerial Flyover
-                        </button>
-                        <button
-                          onClick={() => onOpenDossier(activeMarkerArticle)}
-                          className="w-full py-1.5 bg-gray-800 hover:bg-black text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          <Radio size={12} />
-                          Open Analysis Dossier
-                        </button>
-                      </div>
-                    </div>
-                  </InfoWindow>
-                )}
-              </Map>
-            </APIProvider>
-          ) : (
-            /* Standby Polar Radar Grid HUD */
-            <div className="w-full h-full flex flex-col items-center justify-center relative p-6 bg-[radial-gradient(ellipse_at_center,#051e0f_0%,#020b05_100%)] overflow-hidden">
-              {/* Concentric Radar Range Rings */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
-                <div className="w-[180px] h-[180px] rounded-full border border-green-500/40"></div>
-                <div className="w-[340px] h-[340px] rounded-full border border-green-500/30"></div>
-                <div className="w-[500px] h-[500px] rounded-full border border-green-500/25"></div>
-                <div className="w-[660px] h-[660px] rounded-full border border-green-500/20"></div>
-                <div className="absolute w-full h-[1px] bg-green-500/20"></div>
-                <div className="absolute h-full w-[1px] bg-green-500/20"></div>
+        {/* Radar Viewport Area */}
+        <div className="flex-1 w-full h-full relative overflow-hidden flex flex-col">
+          <div
+            ref={radarContainerRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className={`w-full h-full relative overflow-hidden flex flex-col items-center justify-center transition-all duration-300 ${
+              isDragging ? 'cursor-grabbing' : 'cursor-grab'
+            }`}
+            style={getRadarBackdropStyle()}
+          >
+            {/* Concentric Range Rings scaled with current Zoom Level */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+              <div className="w-[180px] h-[180px] rounded-full border border-green-500/40 flex items-start justify-center pt-1 text-[8px] text-green-400">
+                <span>{Math.round(250 / (mapZoom / 4))} KM</span>
               </div>
-
-              {/* Sweep Line Animation */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
-                <div className="w-[660px] h-[660px] rounded-full relative animate-spin [animation-duration:8s]">
-                  <div className="absolute top-0 right-1/2 w-1/2 h-1/2 bg-gradient-to-br from-green-500/30 to-transparent [clip-path:polygon(100%_100%,100%_0%,0%_0%)]"></div>
-                </div>
+              <div className="w-[340px] h-[340px] rounded-full border border-green-500/30 flex items-start justify-center pt-1 text-[8px] text-green-400/80">
+                <span>{Math.round(500 / (mapZoom / 4))} KM</span>
               </div>
-
-              {/* Plotted Interactive Target Pins */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-[600px] h-[600px] relative pointer-events-auto">
-                  {articles.slice(0, 12).map((art, idx) => {
-                    const angle = (idx / Math.min(articles.length, 12)) * 2 * Math.PI - Math.PI / 2;
-                    const radius = 90 + ((idx * 37) % 180);
-                    const x = 300 + radius * Math.cos(angle);
-                    const y = 300 + radius * Math.sin(angle);
-                    const isSelected = selectedArticle?.id === art.id;
-                    const isClosest = idx === 0;
-
-                    return (
-                      <div
-                        key={art.id}
-                        onClick={() => {
-                          onSelectArticle(art);
-                          setActiveMarkerArticle(art);
-                        }}
-                        style={{ left: `${x}px`, top: `${y}px` }}
-                        className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer group z-20"
-                        title={art.title}
-                      >
-                        <div
-                          className={`w-3 h-3 rounded-full animate-ping absolute -inset-0.5 ${
-                            isSelected ? 'bg-red-400' : isClosest ? 'bg-yellow-400' : 'bg-green-400'
-                          }`}
-                        ></div>
-                        <div
-                          className={`w-3.5 h-3.5 rounded-full border-2 relative flex items-center justify-center shadow-lg ${
-                            isSelected
-                              ? 'bg-red-500 border-red-200'
-                              : isClosest
-                              ? 'bg-yellow-400 border-yellow-200'
-                              : 'bg-green-500 border-green-200'
-                          }`}
-                        ></div>
-                        <div className="hidden group-hover:block absolute left-4 -top-2 bg-black/90 text-green-300 border border-green-700 p-2 rounded text-[9px] whitespace-nowrap shadow-xl z-30">
-                          <div className="font-bold uppercase text-white truncate max-w-[200px]">{art.title}</div>
-                          <div className="text-green-500">{art.location || 'Classified'}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div className="w-[500px] h-[500px] rounded-full border border-green-500/25 flex items-start justify-center pt-1 text-[8px] text-green-400/60">
+                <span>{Math.round(1000 / (mapZoom / 4))} KM</span>
               </div>
+              <div className="w-[660px] h-[660px] rounded-full border border-green-500/20 flex items-start justify-center pt-1 text-[8px] text-green-400/40">
+                <span>{Math.round(1800 / (mapZoom / 4))} KM</span>
+              </div>
+              <div className="absolute w-full h-[1px] bg-green-500/20"></div>
+              <div className="absolute h-full w-[1px] bg-green-500/20"></div>
+            </div>
 
-              {/* Central Radar Diagnostic Notice */}
-              <div className="relative z-30 max-w-md w-full bg-black/85 border border-green-700/70 p-5 rounded-xl text-center shadow-[0_0_40px_rgba(0,0,0,0.9)] backdrop-blur-md">
-                {authError ? (
-                  <>
-                    <div className="flex justify-center mb-2">
-                      <div className="p-2.5 bg-yellow-950/60 border border-yellow-500/60 text-yellow-400 rounded-full animate-pulse">
-                        <ShieldAlert size={28} />
-                      </div>
-                    </div>
-                    <h3 className="text-sm font-black text-yellow-400 uppercase tracking-wider mb-1">
-                      Maps JavaScript API Target Blocked
-                    </h3>
-                    <p className="text-[11px] text-gray-300 mb-3 leading-relaxed font-sans">
-                      The configured API key is not enabled for the <strong>Maps JavaScript API</strong> in Google Cloud Console, or an API restriction is blocking it (<code className="text-yellow-400 bg-black/60 px-1 py-0.5 rounded text-[10px]">ApiTargetBlockedMapError</code>).
-                    </p>
-                    <div className="p-2.5 bg-gray-900/80 border border-gray-800 rounded text-[10px] text-gray-400 text-left mb-4 space-y-1 font-sans">
-                      <div>1. Open Google Cloud Console &gt; APIs &amp; Services &gt; Library</div>
-                      <div>2. Search for <strong>Maps JavaScript API</strong> and click <strong>Enable</strong></div>
-                      <div>3. Or enter a dedicated key with Maps JavaScript API enabled below</div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-center mb-2">
-                      <div className="p-2.5 bg-green-950/60 border border-green-500/60 text-green-400 rounded-full">
-                        <Radar size={28} className="animate-spin" />
-                      </div>
-                    </div>
-                    <h3 className="text-sm font-black text-green-400 uppercase tracking-wider mb-1">
-                      Tactical Radar Ready (Standby Mode)
-                    </h3>
-                    <p className="text-[11px] text-green-300/80 mb-4 leading-relaxed font-sans">
-                      Target coordinate vectors and proximity rings are active. Provide a Google Maps Platform key to unlock interactive satellite orthophotos, vector roads, and 3D street layers.
-                    </p>
-                  </>
-                )}
+            {/* Tactical Coordinate Grid Overlay */}
+            <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#22c55e_1px,transparent_1px)] [background-size:24px_24px]"></div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                  {onOpenMapsConfig && (
-                    <button
-                      onClick={onOpenMapsConfig}
-                      className="w-full sm:w-auto px-4 py-2 bg-green-500 hover:bg-green-400 text-black font-black text-xs uppercase tracking-wider rounded transition-all shadow-[0_0_15px_rgba(34,197,94,0.4)]"
-                    >
-                      {authError ? 'Update Maps Key' : 'Configure Google Maps Key'}
-                    </button>
-                  )}
-
-                  {articles.length > 0 && (
-                    <button
-                      onClick={() => onOpenDossier(articles[0])}
-                      className="w-full sm:w-auto px-4 py-2 bg-gray-900 hover:bg-gray-800 text-green-400 border border-green-800 rounded text-xs uppercase font-bold tracking-wider transition-colors"
-                    >
-                      Inspect First Dossier
-                    </button>
-                  )}
-                </div>
+            {/* Azimuth Degree Marks Outer Perimeter */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-40">
+              <div className="w-[720px] h-[720px] rounded-full border border-dashed border-green-600/40 relative">
+                <span className="absolute top-1 left-1/2 -translate-x-1/2 text-[8px] text-green-400 font-bold">000° N</span>
+                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-green-400 font-bold">180° S</span>
+                <span className="absolute left-1 top-1/2 -translate-y-1/2 text-[8px] text-green-400 font-bold">270° W</span>
+                <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] text-green-400 font-bold">090° E</span>
               </div>
             </div>
-          )}
+
+            {/* Rotating Radar Sweep Beam */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-35">
+              <div className="w-[700px] h-[700px] rounded-full relative animate-spin [animation-duration:8s]">
+                <div className="absolute top-0 right-1/2 w-1/2 h-1/2 bg-gradient-to-br from-green-500/35 to-transparent [clip-path:polygon(100%_100%,100%_0%,0%_0%)]"></div>
+              </div>
+            </div>
+
+            {/* Latitude / Longitude Center Crosshairs Reticle */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none text-[8px] text-green-500/70 font-mono">
+              <div className="border border-green-500/40 w-10 h-10 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-green-400 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+              </div>
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/80 px-1.5 py-0.5 rounded border border-green-900/60 text-green-400 text-[8px]">
+                {mapCenter.lat.toFixed(2)}°N, {Math.abs(mapCenter.lng).toFixed(2)}°W
+              </div>
+            </div>
+
+            {/* GPS User Pin */}
+            {userLocation && (
+              <div
+                style={{
+                  left: getProjectedPosition(userLocation).left,
+                  top: getProjectedPosition(userLocation).top,
+                }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30"
+              >
+                <div className="p-1.5 bg-blue-600 text-white rounded-full border-2 border-white shadow-xl animate-pulse flex items-center justify-center">
+                  <Crosshair size={14} />
+                </div>
+                <div className="absolute left-6 -top-1 bg-black/90 text-blue-300 border border-blue-500 px-1.5 py-0.5 rounded text-[8px] whitespace-nowrap font-bold">
+                  YOUR GPS SENSOR
+                </div>
+              </div>
+            )}
+
+            {/* Plotted Incident Blips on Radar Surface */}
+            <div className="absolute inset-0 pointer-events-none">
+              {articles.map((art, idx) => {
+                const proj = getProjectedPosition(art.coordinates);
+                if (!proj.visible) return null;
+
+                const isSelected = selectedArticle?.id === art.id;
+                const isClosest = closestReport?.id === art.id;
+
+                return (
+                  <div
+                    key={art.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkerClick(art);
+                    }}
+                    style={{ left: proj.left, top: proj.top }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer group z-20"
+                    title={art.title}
+                  >
+                    {/* Pulsing ring */}
+                    <div
+                      className={`w-4 h-4 rounded-full animate-ping absolute -inset-0.5 opacity-75 ${
+                        isSelected ? 'bg-red-400' : isClosest ? 'bg-yellow-400' : 'bg-green-400'
+                      }`}
+                    ></div>
+
+                    {/* Core blip marker */}
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 relative flex items-center justify-center shadow-lg transition-transform group-hover:scale-125 ${
+                        isSelected
+                          ? 'bg-red-500 border-red-200 shadow-[0_0_12px_rgba(239,68,68,0.8)]'
+                          : isClosest
+                          ? 'bg-yellow-400 border-yellow-100 shadow-[0_0_10px_rgba(234,179,8,0.8)]'
+                          : 'bg-green-500 border-green-200 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
+                      }`}
+                    >
+                      <Radio size={9} className="text-black" />
+                    </div>
+
+                    {/* Hover Info Tooltip */}
+                    <div className="hidden group-hover:block absolute left-6 -top-4 bg-black/95 text-green-300 border border-green-600 p-2.5 rounded-lg text-[9px] whitespace-nowrap shadow-2xl z-30 min-w-[220px]">
+                      <div className="font-bold uppercase text-white truncate max-w-[210px] mb-0.5">
+                        {art.title}
+                      </div>
+                      <div className="text-green-400 font-mono mb-1.5">{art.location || 'Classified Coordinates'}</div>
+                      <div className="flex items-center gap-1 text-[8px] text-green-600 mb-2">
+                        <span>PROXIMITY: {art.distanceKm ? `${art.distanceKm} km` : 'Active Range'}</span>
+                      </div>
+                      <div className="pt-1 border-t border-green-900/60">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenDossier(art);
+                          }}
+                          className="w-full py-1 bg-green-600 text-black hover:bg-green-500 rounded text-[8px] font-bold uppercase transition-colors"
+                        >
+                          Open Dossier
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Active Marker Floating Tactical Dossier Card on Radar */}
+            {activeMarkerArticle && (
+              <div className="absolute bottom-4 left-4 z-30 max-w-sm w-full bg-black/90 border border-green-700/80 p-3.5 rounded-xl shadow-2xl backdrop-blur-md pointer-events-auto">
+                <div className="flex justify-between items-start mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldAlert size={14} className="text-red-500 animate-pulse" />
+                    <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest">
+                      LOCKED RADAR TARGET
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setActiveMarkerArticle(null)}
+                    className="text-green-700 hover:text-red-400 p-0.5"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+
+                <h4 className="text-xs font-bold text-gray-100 uppercase tracking-tight line-clamp-1 mb-1">
+                  {activeMarkerArticle.title}
+                </h4>
+                <p className="text-[10px] text-gray-300 line-clamp-2 mb-2.5 font-sans leading-relaxed">
+                  {activeMarkerArticle.description}
+                </p>
+
+                <div className="flex items-center justify-between text-[9px] bg-green-950/40 p-1.5 rounded border border-green-900/60 mb-2.5">
+                  <span className="text-green-600">SECTOR: {activeMarkerArticle.location || 'Classified'}</span>
+                  <span className="text-green-300 font-bold">
+                    {activeMarkerArticle.distanceKm ? `${activeMarkerArticle.distanceKm} km` : 'InRange'}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => onOpenDossier(activeMarkerArticle)}
+                  className="w-full py-2 bg-green-600 hover:bg-green-500 text-black font-black text-[10px] uppercase tracking-wider rounded transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                >
+                  <Radio size={12} />
+                  <span>Analyze Intel Dossier</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Bottom Map Status Bar */}
-        <div className="bg-black/90 p-2.5 px-4 border-t border-green-900/60 flex flex-wrap items-center justify-between text-[9px] text-green-600">
+        {/* Bottom Radar Status Bar */}
+        <div className="bg-black/90 p-2.5 border-t border-green-900/50 flex flex-wrap items-center justify-between text-[9px] text-green-600 font-mono gap-2 z-20">
           <div className="flex items-center gap-3">
-            <span>COORDINATE DATUM: WGS84</span>
-            <span className="hidden md:inline">ELEVATION: 3D PHOTOGRAMMETRY</span>
-            <span>REFERENCE: {userLocation ? 'LOCAL GPS' : selectedHotspot ? selectedHotspot.codeName : 'CONUS GRID'}</span>
+            <span className="flex items-center gap-1">
+              <Compass size={11} className="text-green-400" />
+              CENTER: {mapCenter.lat.toFixed(3)}°N, {mapCenter.lng.toFixed(3)}°W
+            </span>
+            <span>ZOOM: {mapZoom}X</span>
+            <span>
+              GRID: <span className="text-green-400 font-bold uppercase">{gridType}</span>
+            </span>
           </div>
-          <div className="text-green-500 font-bold uppercase tracking-widest">
-            GOOGLE MAPS PLATFORM // AERIAL VIEW ENGINE
+
+          <div className="flex items-center gap-2">
+            <span className="text-green-400 font-bold">UAP INTEL NEXUS // TACTICAL RADAR</span>
           </div>
         </div>
       </div>
 
-      {/* Proximity Intelligence & Ranking Radar Panel */}
-      <div className="xl:w-96 flex flex-col space-y-4">
-        {/* Proximity Filter Card */}
-        <div className="bg-gray-900/70 border border-green-800/40 rounded-xl p-4 backdrop-blur-sm shadow-xl space-y-3">
-          <div className="flex items-center justify-between border-b border-green-900/40 pb-2">
-            <div className="flex items-center gap-2">
-              <Target size={16} className="text-green-400" />
-              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-green-300">
-                PROXIMITY RADAR
-              </h3>
-            </div>
-            <span className="text-[9px] text-green-600 font-bold uppercase">
-              {userLocation ? 'GPS LOCKED' : 'CONUS GRID'}
-            </span>
-          </div>
-
-          <p className="text-[11px] text-green-200/60 leading-relaxed font-sans">
-            Automatically calculates vector distance to all reported sightings. Select any vector to launch a cinematic 3D flyover video.
-          </p>
-
-          {/* Hotspot Sector Selector */}
-          <div>
-            <label className="text-[10px] text-green-500 uppercase font-bold tracking-widest block mb-1.5">
-              Tactical Baseline Sector:
-            </label>
-            <div className="grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto custom-scrollbar pr-1">
-              {UAP_HOTSPOTS.map((h) => (
-                <button
-                  key={h.id}
-                  onClick={() => handleSelectHotspotSector(h)}
-                  className={`p-1.5 text-left rounded text-[9px] border truncate transition-all ${
-                    selectedHotspot?.id === h.id
-                      ? 'bg-green-600 text-black border-green-400 font-bold'
-                      : 'bg-black/50 text-green-400 border-green-900/50 hover:border-green-600'
-                  }`}
-                >
-                  {h.name.split('(')[0]}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Most Proximate Sighting Reports List */}
-        <div className="flex-1 bg-gray-900/70 border border-green-800/40 rounded-xl p-4 backdrop-blur-sm shadow-xl flex flex-col min-h-0">
-          <div className="flex items-center justify-between border-b border-green-900/40 pb-2 mb-3">
+      {/* Right Column: Proximate Sighting Intelligence Roster (320px) */}
+      <div className="xl:w-80 bg-gray-950 border border-green-800/60 rounded-xl p-4 flex flex-col justify-between shadow-xl">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-green-900/50 pb-2">
             <div className="flex items-center gap-1.5">
               <Navigation size={14} className="text-green-400" />
-              <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-green-400">
-                Ranked by Proximity
-              </h4>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-green-400">
+                PROXIMATE RADAR BLIPS
+              </span>
             </div>
-            <span className="text-[9px] bg-green-950 text-green-400 px-2 py-0.5 rounded border border-green-800 font-bold">
-              TOP {proximateArticles.length}
+            <span className="text-[9px] bg-green-950/80 text-green-400 border border-green-800 px-1.5 py-0.5 rounded">
+              TOP {Math.min(proximateArticles.length, 6)}
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1">
-            {proximateArticles.map((art, rank) => {
+          {/* Sighting Roster List */}
+          <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
+            {proximateArticles.slice(0, 8).map((art, idx) => {
               const isSelected = selectedArticle?.id === art.id;
               return (
                 <div
                   key={art.id}
                   onClick={() => handleMarkerClick(art)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  className={`p-2.5 rounded-lg border text-left cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-green-950/60 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
-                      : 'bg-black/40 border-green-900/30 hover:border-green-700 hover:bg-black/60'
+                      ? 'bg-green-950/60 border-green-400 text-green-200 shadow-[0_0_12px_rgba(34,197,94,0.2)]'
+                      : 'bg-black/50 border-green-900/40 text-green-500 hover:bg-gray-900 hover:border-green-700'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-[9px] font-black px-1.5 py-0.2 rounded ${
-                          rank === 0
-                            ? 'bg-yellow-400 text-black'
-                            : 'bg-gray-800 text-green-400'
-                        }`}
-                      >
-                        #{rank + 1}
-                      </span>
-                      <span className="text-[9px] text-green-600 font-bold uppercase truncate max-w-[120px]">
-                        {art.source}
-                      </span>
-                    </div>
-
-                    <div className="text-[10px] font-black text-green-400 whitespace-nowrap bg-green-950/80 px-2 py-0.5 rounded border border-green-900">
-                      {art.distanceKm} km <span className="text-green-700">({art.distanceMiles} mi)</span>
-                    </div>
+                  <div className="flex justify-between items-start gap-1 mb-1">
+                    <span className="text-[8px] font-bold text-green-600 uppercase">
+                      #{idx + 1} // {art.id}
+                    </span>
+                    <span className="text-[9px] font-bold text-green-400">
+                      {art.distanceKm ? `${art.distanceKm} km` : 'InRange'}
+                    </span>
                   </div>
-
-                  <h5 className="text-xs font-bold text-gray-200 line-clamp-1 mb-1 font-mono group-hover:text-green-400">
+                  <h4 className="text-[10px] font-bold uppercase text-gray-200 line-clamp-1 mb-1">
                     {art.title}
-                  </h5>
-
-                  <div className="text-[9px] text-green-700 truncate mb-2">
-                    LOC: {art.location || art.proximateAddress}
+                  </h4>
+                  <div className="text-[8px] text-green-600 truncate mb-2">
+                    {art.location || 'Classified Sector'}
                   </div>
 
-                  <div className="flex items-center gap-1.5 pt-1 border-t border-green-900/20">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onLaunchFlyover(art);
-                      }}
-                      className="flex-1 py-1 bg-green-900/20 hover:bg-green-500 hover:text-black text-green-400 rounded text-[9px] font-bold uppercase tracking-wider border border-green-900 hover:border-green-400 transition-all flex items-center justify-center gap-1"
-                    >
-                      <Film size={10} />
-                      Aerial Flyover
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenDossier(art);
-                      }}
-                      className="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-green-500 rounded text-[9px] font-bold uppercase border border-green-900/40 transition-colors"
-                      title="Open Analysis Dossier"
-                    >
-                      <Eye size={10} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenDossier(art);
+                    }}
+                    className="w-full py-1 bg-gray-900 hover:bg-green-600 hover:text-black text-gray-300 hover:border-green-500 border border-gray-700 rounded text-[8px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Radio size={9} />
+                    <span>Open Intel Dossier</span>
+                  </button>
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Hotspot Sectors Quick Jumper */}
+        <div className="pt-3 border-t border-green-900/50 mt-3">
+          <div className="text-[9px] text-green-600 uppercase font-bold tracking-widest mb-1.5 flex items-center gap-1">
+            <Target size={11} className="text-green-400" />
+            <span>Hotspot Sectors:</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1 text-[8px]">
+            {UAP_HOTSPOTS.slice(0, 4).map((h) => (
+              <button
+                key={h.id}
+                onClick={() => handleSelectHotspotSector(h)}
+                className="p-1 rounded bg-black/50 border border-green-900/40 text-green-400 hover:bg-green-900/40 truncate text-left"
+                title={h.name}
+              >
+                {h.codeName}
+              </button>
+            ))}
           </div>
         </div>
       </div>

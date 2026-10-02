@@ -1,7 +1,7 @@
 {
   "short_name": "UAPIntelNexus",
   "name": "UAP Intel Nexus — Tactical Sighting & Reconnaissance Command",
-  "description": "Tactical UAP intelligence command center featuring real-time Google Maps radar tracking, cinematic 3D Aerial View flyovers, multimodal Gemini intelligence dossiers, neural audio briefings, and Google Docs synchronization.",
+  "description": "Tactical UAP intelligence command center featuring real-time geospatial radar tracking, zoomed tactical sector inspection, multimodal Gemini intelligence dossiers, neural audio briefings, and Google Docs synchronization.",
   "icons": [
     {
       "src": "/icon.svg",
