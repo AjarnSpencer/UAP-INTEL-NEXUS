@@ -19,7 +19,7 @@ interface ApiKeyModalProps {
   onClearKey?: () => void;
 }
 
-const DEMO_PREVIEW_KEY = 'AIzaSy_DEMO_PREVIEW_MODE_KEY_NEXUS_KOH_LANTA_BYOK';
+const DEMO_PREVIEW_KEY = 'AIzaSy_DEMO_PREVIEW_MODE_KEY_UAP_INTEL_NEXUS';
 
 const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ 
   onSave, 
@@ -93,16 +93,16 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             BYOK STAFF ACCESS GATEWAY
           </h2>
           <p className="text-green-600 text-center text-[10px] uppercase tracking-[0.25em] mb-6">
-            Equatorial CEA & UAP Telemetry Nexus // Client-Side Isolation
+            Tactical UAP Reconnaissance & Telemetry Nexus // Client-Side Isolation
           </p>
 
           {/* Staff Dialog Notice */}
           <div className="mb-6 p-3.5 bg-green-950/40 border border-green-700/40 rounded-lg text-[11px] leading-relaxed text-green-300/90 font-sans">
             <p className="font-semibold text-green-400 mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase">
               <ShieldAlert size={13} className="text-green-400 shrink-0" />
-              Staff Security & BYOK Access Notice
+              Investigator Security & BYOK Access Notice
             </p>
-            Ganja House Koh Lanta staff personal Gemini API key is needed to operate the autonomous AI advisor, real-time sensor evaluations, and harvest predictions. Your key is stored solely in your local browser sandbox (<code className="text-green-400 bg-black/40 px-1 py-0.5 rounded font-mono text-[10px]">localStorage</code>). No keys or secrets are ever logged or transmitted to any third-party server.
+            Your personal Google Gemini API key is required to power autonomous tactical intelligence dossiers, neural audio briefings, and declassified search grounding. Your key is stored solely in your local browser sandbox (<code className="text-green-400 bg-black/40 px-1 py-0.5 rounded font-mono text-[10px]">localStorage</code>). No keys or credentials are ever logged, tracked, or transmitted to any third-party server.
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,8 +1,14 @@
 {
-  "short_name": "GanjaHouseCEA",
-  "name": "Ganja House Koh Lanta - Equatorial CEA Management System",
-  "description": "Equatorial Controlled Environment Agriculture (CEA) management system for Ganja House Koh Lanta with real-time ESP32/DHT22 telemetry, Tetens Leaf VPD, Dutch Passion repository, and BYOK Gemini botanical AI.",
+  "short_name": "UAPIntelNexus",
+  "name": "UAP Intel Nexus — Tactical Sighting & Reconnaissance Command",
+  "description": "Tactical UAP intelligence command center featuring real-time Google Maps radar tracking, cinematic 3D Aerial View flyovers, multimodal Gemini intelligence dossiers, neural audio briefings, and Google Docs synchronization.",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
     {
       "src": "/icon-192.png",
       "type": "image/png",
@@ -21,7 +27,7 @@
   "theme_color": "#16a34a",
   "display": "standalone",
   "orientation": "any",
-  "categories": ["agriculture", "business", "productivity", "utilities"],
+  "categories": ["news", "productivity", "utilities"],
   "shortcuts": [
     {
       "name": "Tactical Radar Grid",
