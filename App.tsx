@@ -1,35 +1,79 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchNews } from './services/newsService';
-import { Article, VoiceID } from './types';
+import { Article, VoiceID, UAPCoordinates } from './types';
 import ArticleCard from './components/ArticleCard';
 import AnalysisModal from './components/AnalysisModal';
 import ApiKeyModal from './components/ApiKeyModal';
 import LoadingSpinner from './components/LoadingSpinner';
-import { RefreshCw, Radio, Globe, ChevronLeft, ChevronRight, List, LogOut, ShieldCheck, Lock } from 'lucide-react';
 import AjarnSpencerCredit from './components/AjarnSpencerCredit';
+import UAPTacticalMap from './components/UAPTacticalMap';
+import AerialFlyoverViewer from './components/AerialFlyoverViewer';
+import MapsConfigModal from './components/MapsConfigModal';
+import GoogleDocsModal from './components/GoogleDocsModal';
+import { 
+  RefreshCw, 
+  Radio, 
+  Globe, 
+  ChevronLeft, 
+  ChevronRight, 
+  List, 
+  LogOut, 
+  ShieldCheck, 
+  Lock,
+  Map as MapIcon,
+  LayoutGrid,
+  Columns,
+  Film,
+  Compass,
+  FileText,
+  Key,
+  Sparkles
+} from 'lucide-react';
 
 const VOICES: VoiceID[] = ['Fenrir', 'Kore', 'Charon', 'Aoede', 'Zephyr', 'Puck', 'Leda', 'Orus'];
 const PAGE_SIZE_OPTIONS = [9, 18, 27, 45, 99];
 const STORAGE_KEY = 'UAP_NEXUS_KEY';
+const MAPS_STORAGE_KEY = 'UAP_MAPS_KEY';
+
+type ViewMode = 'map' | 'cards' | 'split';
 
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [mapsKey, setMapsKey] = useState<string>('');
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<VoiceID>('Fenrir');
   
+  // Tactical View Mode
+  const [viewMode, setViewMode] = useState<ViewMode>('map');
+
+  // Modals State
+  const [isFlyoverOpen, setIsFlyoverOpen] = useState<boolean>(false);
+  const [flyoverArticle, setFlyoverArticle] = useState<Article | null>(null);
+  const [flyoverAddress, setFlyoverAddress] = useState<string | undefined>(undefined);
+  const [flyoverCoords, setFlyoverCoords] = useState<UAPCoordinates | undefined>(undefined);
+
+  const [isMapsConfigOpen, setIsMapsConfigOpen] = useState<boolean>(false);
+  const [isDocsModalOpen, setIsDocsModalOpen] = useState<boolean>(false);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(9);
 
-  // Initialize Key
+  // Initialize Keys
   useEffect(() => {
     const storedKey = localStorage.getItem(STORAGE_KEY);
     if (storedKey) {
       setApiKey(storedKey);
+    }
+
+    const storedMapsKey = localStorage.getItem(MAPS_STORAGE_KEY) || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || '';
+    if (storedMapsKey) {
+      setMapsKey(storedMapsKey);
     }
   }, []);
 
@@ -38,11 +82,19 @@ const App: React.FC = () => {
     setApiKey(key);
   };
 
+  const handleSaveMapsKey = (key: string) => {
+    localStorage.setItem(MAPS_STORAGE_KEY, key);
+    setMapsKey(key);
+  };
+
   const handleClearKey = () => {
     localStorage.removeItem(STORAGE_KEY);
     setApiKey(null);
     setArticles([]);
   };
+
+  // Google Maps Platform key should only come from dedicated maps key or env, NOT Gemini key
+  const effectiveMapsKey = mapsKey || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || '';
 
   const loadIntel = useCallback(async () => {
     if (!apiKey) return;
@@ -81,6 +133,24 @@ const App: React.FC = () => {
     setSelectedArticle(null);
   };
 
+  const handleLaunchFlyover = (article: Article) => {
+    setFlyoverArticle(article);
+    setFlyoverAddress(article.proximateAddress);
+    setFlyoverCoords(article.coordinates);
+    setIsFlyoverOpen(true);
+  };
+
+  const handleLaunchQuickFlyover = () => {
+    if (articles.length > 0) {
+      handleLaunchFlyover(selectedArticle || articles[0]);
+    } else {
+      setFlyoverArticle(null);
+      setFlyoverAddress('600 Montgomery St, San Francisco, CA 94111, USA');
+      setFlyoverCoords({ lat: 37.7952, lng: -122.4028 });
+      setIsFlyoverOpen(true);
+    }
+  };
+
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -108,22 +178,49 @@ const App: React.FC = () => {
       <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-800/20 via-gray-900/50 to-black z-0"></div>
       
       <main className="container mx-auto px-4 py-8 relative z-10 flex-grow">
-        <header className="relative text-center mb-10 border-b border-green-800/50 pb-8">
+        <header className="relative text-center mb-8 border-b border-green-800/50 pb-8">
           
           <div className="absolute top-0 right-0 flex flex-col items-end gap-2">
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded border border-green-900/30">
-              <ShieldCheck size={12} className="text-green-500" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-green-600">Secure Link Active</span>
-              <Lock size={10} className="text-green-800" />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setIsApiKeyModalOpen(true)}
+                className="flex items-center gap-1.5 bg-black/60 hover:bg-black/90 px-3 py-1 rounded border border-green-800/60 hover:border-green-500 text-[10px] font-bold uppercase tracking-wider transition-all"
+                title="Manage Personal Gemini API Key / BYOK Gateway"
+              >
+                <span className={`w-2 h-2 rounded-full ${apiKey && !apiKey.includes('DEMO_PREVIEW_MODE') ? 'bg-green-500 animate-pulse' : 'bg-yellow-400'}`}></span>
+                <span className={apiKey && !apiKey.includes('DEMO_PREVIEW_MODE') ? 'text-green-400' : 'text-yellow-400'}>
+                  {apiKey && !apiKey.includes('DEMO_PREVIEW_MODE') ? 'BYOK: Active' : 'BYOK Key'}
+                </span>
+                <Key size={10} className="text-green-600" />
+              </button>
+
+              <button
+                onClick={() => setIsDocsModalOpen(true)}
+                className="text-blue-400 hover:text-blue-200 transition-colors flex items-center gap-1 text-[9px] uppercase tracking-[0.2em] font-bold border border-blue-900/60 hover:border-blue-500 px-2.5 py-1 rounded bg-black/40"
+                title="Open Google Docs Intelligence Archive & Synchronized Dossiers"
+              >
+                <FileText size={11} className="text-blue-400" />
+                Google Docs
+              </button>
+
+              <button
+                onClick={() => setIsMapsConfigOpen(true)}
+                className="text-green-600 hover:text-green-300 transition-colors flex items-center gap-1 text-[9px] uppercase tracking-[0.2em] font-bold border border-green-900/40 hover:border-green-600 px-2.5 py-1 rounded bg-black/40"
+                title="Configure Google Maps Platform Key / Demo Key"
+              >
+                <MapIcon size={10} />
+                Maps Config
+              </button>
+
+              <button 
+                 onClick={handleClearKey}
+                 className="text-green-900 hover:text-red-500 transition-colors flex items-center gap-1 text-[9px] uppercase tracking-[0.2em] font-bold border border-green-900/30 hover:border-red-900/50 px-2.5 py-1 rounded group"
+                 title="Revoke Credentials & Logout"
+              >
+                 <LogOut size={10} className="group-hover:animate-pulse" />
+                 Revoke
+              </button>
             </div>
-            <button 
-               onClick={handleClearKey}
-               className="text-green-900 hover:text-red-500 transition-colors flex items-center gap-1 text-[9px] uppercase tracking-[0.2em] font-bold border border-green-900/30 hover:border-red-900/50 px-3 py-1 rounded group"
-               title="Revoke Credentials & Logout"
-            >
-               <LogOut size={10} className="group-hover:animate-pulse" />
-               Revoke Clearance
-            </button>
           </div>
 
           <div className="flex justify-center items-center gap-4 mb-4 mt-12 lg:mt-0">
@@ -137,6 +234,60 @@ const App: React.FC = () => {
           </div>
           <p className="text-emerald-400/70 tracking-[0.4em] text-xs uppercase font-bold">Clearance Level: Top Secret // Ajarn Spencer Littlewood</p>
         </header>
+
+        {/* Tactical View Mode Switcher & Quick Recon HUD Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-black/70 p-3 sm:p-4 rounded-xl border border-green-800/40 backdrop-blur-md shadow-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-green-700 uppercase font-bold tracking-widest hidden sm:inline">
+              OPERATIONAL VIEW:
+            </span>
+            <div className="flex items-center gap-1 bg-gray-900/80 p-1 rounded-lg border border-green-900/60">
+              <button
+                onClick={() => setViewMode('map')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all ${
+                  viewMode === 'map'
+                    ? 'bg-green-600 text-black shadow-[0_0_12px_rgba(34,197,94,0.4)]'
+                    : 'text-green-500 hover:text-green-300'
+                }`}
+              >
+                <MapIcon size={12} />
+                Tactical Radar
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all ${
+                  viewMode === 'cards'
+                    ? 'bg-green-600 text-black shadow-[0_0_12px_rgba(34,197,94,0.4)]'
+                    : 'text-green-500 hover:text-green-300'
+                }`}
+              >
+                <LayoutGrid size={12} />
+                Intel Dossiers
+              </button>
+              <button
+                onClick={() => setViewMode('split')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all ${
+                  viewMode === 'split'
+                    ? 'bg-green-600 text-black shadow-[0_0_12px_rgba(34,197,94,0.4)]'
+                    : 'text-green-500 hover:text-green-300'
+                }`}
+              >
+                <Columns size={12} />
+                Split Command
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Launch Aerial Recon Flyover */}
+          <button
+            onClick={handleLaunchQuickFlyover}
+            className="flex items-center gap-2 px-4 py-2 bg-green-950/80 hover:bg-green-500 hover:text-black text-green-400 border border-green-600 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(34,197,94,0.2)] font-mono"
+            title="Launch Cinematic Aerial 3D Flyover for Proximate UAP Coordinates"
+          >
+            <Film size={14} className="animate-pulse" />
+            <span>Launch Cinematic Aerial Flyover</span>
+          </button>
+        </div>
 
         {/* Control Panel */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8 bg-gray-800/50 p-6 rounded-lg border border-green-800/30 backdrop-blur-sm shadow-lg">
@@ -208,42 +359,76 @@ const App: React.FC = () => {
             <button onClick={handleClearKey} className="mt-4 text-[10px] text-red-500 underline uppercase tracking-widest">Update Access Credentials</button>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {currentArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} onAnalyze={handleOpenDossier} />
-              ))}
-            </div>
-
-            {/* Pagination Controls */}
-            {articles.length > 0 && (
-                <div className="mt-12 flex justify-center items-center gap-4">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="p-2 rounded-full border border-green-700 text-green-400 hover:bg-green-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                    >
-                        <ChevronLeft size={24} />
-                    </button>
-                    
-                    <span className="text-green-500 font-mono text-sm uppercase tracking-widest">
-                        Page {currentPage} of {totalPages}
-                    </span>
-                    
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="p-2 rounded-full border border-green-700 text-green-400 hover:bg-green-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                    >
-                        <ChevronRight size={24} />
-                    </button>
-                </div>
+          <div className="space-y-10">
+            {/* Interactive Google Map Radar Grid View (Shown in 'map' or 'split' mode) */}
+            {(viewMode === 'map' || viewMode === 'split') && (
+              <div className="space-y-3">
+                <UAPTacticalMap
+                  apiKey={effectiveMapsKey}
+                  articles={articles}
+                  selectedArticle={selectedArticle}
+                  onSelectArticle={setSelectedArticle}
+                  onLaunchFlyover={handleLaunchFlyover}
+                  onOpenDossier={handleOpenDossier}
+                  onOpenMapsConfig={() => setIsMapsConfigOpen(true)}
+                />
+              </div>
             )}
-            
-            {articles.length > 0 && (
-                <div className="text-center mt-4 text-[10px] text-green-900 uppercase tracking-[0.5em] font-bold">
-                    Transmission Packet Count: {articles.length}
+
+            {/* Intel Article Cards Grid (Shown in 'cards' or 'split' mode) */}
+            {(viewMode === 'cards' || viewMode === 'split') && (
+              <div className="space-y-8">
+                {viewMode === 'split' && (
+                  <div className="flex items-center gap-3 border-b border-green-800/40 pb-3">
+                    <LayoutGrid size={18} className="text-green-400" />
+                    <h3 className="text-sm font-bold uppercase tracking-[0.25em] text-green-300">
+                      INTERCEPTED DOSSIER FEED
+                    </h3>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {currentArticles.map((article) => (
+                    <ArticleCard 
+                      key={article.id} 
+                      article={article} 
+                      onAnalyze={handleOpenDossier}
+                      onLaunchFlyover={handleLaunchFlyover} 
+                    />
+                  ))}
                 </div>
+
+                {/* Pagination Controls */}
+                {articles.length > 0 && (
+                    <div className="mt-12 flex justify-center items-center gap-4">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-full border border-green-700 text-green-400 hover:bg-green-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronLeft size={24} />
+                        </button>
+                        
+                        <span className="text-green-500 font-mono text-sm uppercase tracking-widest">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded-full border border-green-700 text-green-400 hover:bg-green-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronRight size={24} />
+                        </button>
+                    </div>
+                )}
+                
+                {articles.length > 0 && (
+                    <div className="text-center mt-4 text-[10px] text-green-900 uppercase tracking-[0.5em] font-bold">
+                        Transmission Packet Count: {articles.length}
+                    </div>
+                )}
+              </div>
             )}
             
             {articles.length === 0 && !isLoading && !error && (
@@ -251,10 +436,11 @@ const App: React.FC = () => {
                     SYSTEM READY... AWAITING TARGET PARAMETERS
                 </div>
             )}
-          </>
+          </div>
         )}
       </main>
 
+      {/* Analysis Dossier Modal */}
       {selectedArticle && (
         <AnalysisModal
           isOpen={!!selectedArticle}
@@ -262,8 +448,46 @@ const App: React.FC = () => {
           article={selectedArticle}
           voiceId={selectedVoice}
           apiKey={apiKey}
+          onLaunchFlyover={handleLaunchFlyover}
+          onOpenDocsArchive={() => setIsDocsModalOpen(true)}
         />
       )}
+
+      {/* Google Docs Intelligence Archive & Dossier Manager */}
+      <GoogleDocsModal
+        isOpen={isDocsModalOpen}
+        onClose={() => setIsDocsModalOpen(false)}
+      />
+
+      {/* BYOK Gateway Modal (when opened from header) */}
+      {isApiKeyModalOpen && (
+        <ApiKeyModal
+          onSave={handleSaveKey}
+          onClose={() => setIsApiKeyModalOpen(false)}
+          currentKey={apiKey}
+          onClearKey={handleClearKey}
+        />
+      )}
+
+      {/* Cinematic Aerial Flyover Recon Modal */}
+      <AerialFlyoverViewer
+        isOpen={isFlyoverOpen}
+        onClose={() => setIsFlyoverOpen(false)}
+        targetAddress={flyoverAddress}
+        targetCoordinates={flyoverCoords}
+        article={flyoverArticle}
+        apiKey={effectiveMapsKey}
+        onOpenDossier={handleOpenDossier}
+      />
+
+      {/* Google Maps Platform API Key Config Modal */}
+      <MapsConfigModal
+        isOpen={isMapsConfigOpen}
+        onClose={() => setIsMapsConfigOpen(false)}
+        currentMapsKey={mapsKey}
+        onSaveMapsKey={handleSaveMapsKey}
+      />
+
       <AjarnSpencerCredit />
     </div>
   );

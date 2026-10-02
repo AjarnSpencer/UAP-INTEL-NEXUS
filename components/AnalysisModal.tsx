@@ -3,8 +3,27 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Article, ReporterStyle, VoiceID } from '../types';
 import { generateIntelBriefing, generateAudioBriefing, generateVisualReconstruction } from '../services/geminiService';
 import { createWavBlob } from '../utils/audioUtils';
+import { createUAPDossierDoc } from '../services/googleDocsService';
+import { getAccessToken, googleSignIn } from '../services/authService';
 import LoadingSpinner from './LoadingSpinner';
-import { X, Play, Square, FileText, Radio, ShieldAlert, Copy, Download, Check, Camera, Image as ImageIcon } from 'lucide-react';
+import { 
+  X, 
+  Play, 
+  Square, 
+  FileText, 
+  Radio, 
+  ShieldAlert, 
+  Copy, 
+  Download, 
+  Check, 
+  Camera, 
+  Image as ImageIcon, 
+  Film, 
+  MapPin, 
+  ExternalLink,
+  CheckCircle2,
+  FileCheck
+} from 'lucide-react';
 
 interface AnalysisModalProps {
   isOpen: boolean;
@@ -12,6 +31,8 @@ interface AnalysisModalProps {
   article: Article;
   voiceId: VoiceID;
   apiKey: string;
+  onLaunchFlyover?: (article: Article) => void;
+  onOpenDocsArchive?: () => void;
 }
 
 const STYLES: ReporterStyle[] = ['Academic', 'Gonzo', 'Skeptic', 'Viral'];
@@ -22,6 +43,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
   article,
   voiceId,
   apiKey,
+  onLaunchFlyover,
+  onOpenDocsArchive,
 }) => {
   const [activeStyle, setActiveStyle] = useState<ReporterStyle>('Academic');
   const [content, setContent] = useState<string | null>(null);
@@ -34,6 +57,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
   
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+
+  // Google Docs export states
+  const [isExportingDoc, setIsExportingDoc] = useState<boolean>(false);
+  const [exportedDocUrl, setExportedDocUrl] = useState<string | null>(null);
+  const [docsExportError, setDocsExportError] = useState<string | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -128,6 +156,42 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
     }
   };
 
+  const handleExportToGoogleDocs = async () => {
+    if (!content) return;
+    setIsExportingDoc(true);
+    setDocsExportError(null);
+    setExportedDocUrl(null);
+
+    try {
+      let token = await getAccessToken();
+      if (!token) {
+        // Trigger Google Sign-In with popup
+        const authResult = await googleSignIn();
+        token = authResult?.accessToken || null;
+      }
+
+      if (!token) {
+        throw new Error('Google authorization was cancelled or failed.');
+      }
+
+      const result = await createUAPDossierDoc(token, {
+        article,
+        briefingContent: content,
+        reporterStyle: activeStyle,
+        voiceId,
+        coordinates: article.coordinates,
+        visualReconstructionUrl: visualUrl,
+      });
+
+      setExportedDocUrl(result.documentUrl);
+    } catch (err: any) {
+      console.error('Google Docs export failed:', err);
+      setDocsExportError(err.message || 'Export to Google Docs failed');
+    } finally {
+      setIsExportingDoc(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -169,18 +233,54 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
                 ))}
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               {content && !isGenerating && (
+                <>
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/80 text-green-500 border border-green-800/50 rounded hover:bg-green-500 hover:text-black transition-all text-[10px] font-bold uppercase tracking-widest"
+                  >
+                    {copied ? <Check size={13} /> : <Copy size={13} />}
+                    {copied ? 'Captured' : 'Copy Intel'}
+                  </button>
+
+                  {!exportedDocUrl ? (
+                    <button
+                      onClick={handleExportToGoogleDocs}
+                      disabled={isExportingDoc}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-950/80 text-blue-400 border border-blue-600/60 rounded hover:bg-blue-600 hover:text-black transition-all text-[10px] font-bold uppercase tracking-widest shadow-[0_0_10px_rgba(59,130,246,0.2)] font-mono disabled:opacity-50"
+                      title="Export this declassified dossier to a formatted Google Doc"
+                    >
+                      <FileText size={13} />
+                      {isExportingDoc ? 'Exporting...' : 'Export to Google Docs'}
+                    </button>
+                  ) : (
+                    <a
+                      href={exportedDocUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-black rounded text-[10px] font-bold uppercase tracking-widest font-mono shadow-[0_0_15px_rgba(34,197,94,0.4)] animate-pulse hover:bg-green-400 transition-all"
+                    >
+                      <FileCheck size={13} />
+                      <span>View in Google Docs</span>
+                      <ExternalLink size={11} />
+                    </a>
+                  )}
+                </>
+              )}
+
+              {onLaunchFlyover && (
                 <button
-                  onClick={handleCopy}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-800/80 text-green-500 border border-green-800/50 rounded hover:bg-green-500 hover:text-black transition-all text-[10px] font-bold uppercase tracking-widest"
+                  onClick={() => onLaunchFlyover(article)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-950/80 text-green-400 border border-green-600 rounded hover:bg-green-500 hover:text-black transition-all text-[10px] font-bold uppercase tracking-widest shadow-[0_0_10px_rgba(34,197,94,0.2)] font-mono"
+                  title="Launch Google Maps Aerial View 3D Flyover"
                 >
-                  {copied ? <Check size={14} /> : <Copy size={14} />}
-                  {copied ? 'Captured' : 'Copy Intel'}
+                  <Film size={13} />
+                  Aerial Flyover
                 </button>
               )}
 
-              <div className="flex items-center gap-3 bg-black/60 px-4 py-2 rounded border border-green-900/50">
+              <div className="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded border border-green-900/50">
                   <Radio size={14} className="text-green-500 animate-pulse" />
                   <span className="text-[10px] text-green-600 font-mono uppercase tracking-widest">Speaker: {voiceId}</span>
                   {audioUrl && !isAudioGenerating && (
@@ -204,6 +304,22 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
               </div>
             </div>
         </div>
+
+        {/* Google Docs Export Error Banner */}
+        {docsExportError && (
+          <div className="bg-red-950/80 px-4 py-2 border-b border-red-800 text-[11px] text-red-300 font-mono flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldAlert size={14} className="text-red-400" />
+              <span>Google Docs Export: {docsExportError}</span>
+            </div>
+            <button 
+              onClick={() => setDocsExportError(null)}
+              className="text-red-400 hover:text-white text-xs px-1"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/20 flex flex-col lg:flex-row">
@@ -235,26 +351,51 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
               )}
             </div>
             
-            <div className="mt-4 p-4 bg-green-900/5 border border-green-900/20 rounded flex-grow">
-              <div className="text-[10px] text-green-700 font-mono uppercase mb-2 border-b border-green-900/20 pb-1">Telemetry Data</div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[9px] font-mono">
-                  <span className="text-green-800">SOURCE_ID:</span>
-                  <span className="text-green-500">NEXUS-7</span>
+            <div className="mt-4 p-4 bg-green-900/5 border border-green-900/20 rounded flex-grow flex flex-col justify-between">
+              <div>
+                <div className="text-[10px] text-green-700 font-mono uppercase mb-2 border-b border-green-900/20 pb-1 flex items-center justify-between">
+                  <span>Telemetry Data</span>
+                  <MapPin size={10} className="text-green-500" />
                 </div>
-                <div className="flex justify-between text-[9px] font-mono">
-                  <span className="text-green-800">ENCRYPTION:</span>
-                  <span className="text-green-500">AES-256-QUANTUM</span>
-                </div>
-                <div className="flex justify-between text-[9px] font-mono">
-                  <span className="text-green-800">SCAN_FREQ:</span>
-                  <span className="text-green-500">1420.4 MHz</span>
-                </div>
-                <div className="flex justify-between text-[9px] font-mono">
-                  <span className="text-green-800">CONFIDENCE:</span>
-                  <span className="text-green-500">98.4%</span>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span className="text-green-800">SOURCE_ID:</span>
+                    <span className="text-green-500">NEXUS-7</span>
+                  </div>
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span className="text-green-800">GRID_SECTOR:</span>
+                    <span className="text-green-400 font-bold truncate max-w-[150px]">{article.location || 'Classified'}</span>
+                  </div>
+                  {article.coordinates && (
+                    <div className="flex justify-between text-[9px] font-mono">
+                      <span className="text-green-800">COORDINATES:</span>
+                      <span className="text-green-400 font-bold">{article.coordinates.lat.toFixed(3)}°, {article.coordinates.lng.toFixed(3)}°</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span className="text-green-800">ENCRYPTION:</span>
+                    <span className="text-green-500">AES-256-QUANTUM</span>
+                  </div>
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span className="text-green-800">SCAN_FREQ:</span>
+                    <span className="text-green-500">1420.4 MHz</span>
+                  </div>
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span className="text-green-800">CONFIDENCE:</span>
+                    <span className="text-green-500">98.4%</span>
+                  </div>
                 </div>
               </div>
+
+              {onLaunchFlyover && (
+                <button
+                  onClick={() => onLaunchFlyover(article)}
+                  className="mt-3 w-full py-2 bg-green-950/60 hover:bg-green-600 hover:text-black text-green-400 border border-green-700/60 rounded text-[10px] uppercase font-bold tracking-wider font-mono flex items-center justify-center gap-1.5 transition-all shadow-[0_0_10px_rgba(34,197,94,0.1)]"
+                >
+                  <Film size={12} />
+                  Launch 3D Aerial Flyover
+                </button>
+              )}
             </div>
           </div>
 

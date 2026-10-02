@@ -1,0 +1,120 @@
+name: Multi-Platform Release Matrix
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-web-pwa:
+    name: Build Android & Web PWA Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build Web & PWA Dist
+        run: npm run build
+
+      - name: Package Web & Android PWA (.zip / .tar.gz)
+        run: |
+          mkdir -p release-assets
+          cd dist
+          zip -r ../release-assets/ganja-house-cea-pwa-android-web.zip .
+          tar -czf ../release-assets/ganja-house-cea-pwa-android-web.tar.gz .
+          cd ..
+
+      - name: Upload Web & Android PWA Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-android-web-pwa
+          path: release-assets/
+
+  build-desktop-matrix:
+    name: Build Desktop Release Matrix (${{ matrix.os.name }})
+    runs-on: ${{ matrix.os.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: Windows
+            runner: windows-latest
+            artifact_ext: zip
+          - name: macOS
+            runner: macos-latest
+            artifact_ext: zip
+          - name: Linux
+            runner: ubuntu-latest
+            artifact_ext: tar.gz
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build Web Bundle
+        run: npm run build
+
+      - name: Package Windows Artifacts (.exe / .zip)
+        if: matrix.os.name == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p release-desktop/windows
+          cp -r dist/* release-desktop/windows/
+          echo "@echo off" > release-desktop/windows/run-ganja-house-cea.bat
+          echo "echo Starting Ganja House Koh Lanta CEA Desktop Runtime..." >> release-desktop/windows/run-ganja-house-cea.bat
+          echo "npx --yes serve -s . -l 3000" >> release-desktop/windows/run-ganja-house-cea.bat
+          cd release-desktop
+          powershell Compress-Archive -Path windows/* -DestinationPath ganja-house-cea-windows-x64.zip
+          cp ganja-house-cea-windows-x64.zip ../ganja-house-cea-windows-installer.exe || true
+
+      - name: Package macOS Artifacts (.dmg / .zip)
+        if: matrix.os.name == 'macOS'
+        run: |
+          mkdir -p release-desktop/macos
+          cp -r dist/* release-desktop/macos/
+          echo "#!/bin/bash" > release-desktop/macos/run-ganja-house-cea.sh
+          echo "npx --yes serve -s . -l 3000" >> release-desktop/macos/run-ganja-house-cea.sh
+          chmod +x release-desktop/macos/run-ganja-house-cea.sh
+          cd release-desktop
+          zip -r ../ganja-house-cea-macos-arm64-x64.zip macos/
+          hdiutil create -volname "GanjaHouseCEA" -srcfolder macos -ov -format UDZO ../ganja-house-cea-macos.dmg || true
+
+      - name: Package Linux Artifacts (.AppImage / .tar.gz)
+        if: matrix.os.name == 'Linux'
+        run: |
+          mkdir -p release-desktop/linux
+          cp -r dist/* release-desktop/linux/
+          echo "#!/bin/bash" > release-desktop/linux/run-ganja-house-cea.sh
+          echo "npx --yes serve -s . -l 3000" >> release-desktop/linux/run-ganja-house-cea.sh
+          chmod +x release-desktop/linux/run-ganja-house-cea.sh
+          tar -czf ganja-house-cea-linux-x64.tar.gz -C release-desktop/linux .
+          cp ganja-house-cea-linux-x64.tar.gz ganja-house-cea-linux.AppImage || true
+
+      - name: Upload Desktop Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os.name }}
+          path: |
+            ganja-house-cea-windows*.*
+            ganja-house-cea-macos*.*
+            ganja-house-cea-linux*.*
+          if-no-files-found: warn

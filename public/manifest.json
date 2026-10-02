@@ -1,0 +1,55 @@
+{
+  "short_name": "GanjaHouseCEA",
+  "name": "Ganja House Koh Lanta - Equatorial CEA Management System",
+  "description": "Equatorial Controlled Environment Agriculture (CEA) management system for Ganja House Koh Lanta with real-time ESP32/DHT22 telemetry, Tetens Leaf VPD, Dutch Passion repository, and BYOK Gemini botanical AI.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#050d09",
+  "theme_color": "#16a34a",
+  "display": "standalone",
+  "orientation": "any",
+  "categories": ["agriculture", "business", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Tactical Radar Grid",
+      "short_name": "Radar",
+      "description": "Launch real-time sensory and radar map",
+      "url": "/?view=map",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Intelligence Dossiers",
+      "short_name": "Dossiers",
+      "description": "Inspect classified dossier archives",
+      "url": "/?view=cards",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Google Docs Export",
+      "short_name": "GoogleDocs",
+      "description": "Open synchronized Google Docs archive",
+      "url": "/?view=docs",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "BYOK Gateway",
+      "short_name": "BYOK",
+      "description": "Configure client-side Gemini API key",
+      "url": "/?action=byok",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
