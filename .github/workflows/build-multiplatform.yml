@@ -30,8 +30,8 @@ jobs:
         run: |
           mkdir -p release-assets
           cd dist
-          zip -r ../release-assets/ganja-house-cea-pwa-android-web.zip .
-          tar -czf ../release-assets/ganja-house-cea-pwa-android-web.tar.gz .
+          zip -r ../release-assets/uap-intel-nexus-pwa-android-web.zip .
+          tar -czf ../release-assets/uap-intel-nexus-pwa-android-web.tar.gz .
           cd ..
 
       - name: Upload Web & Android PWA Artifacts
@@ -79,42 +79,42 @@ jobs:
         run: |
           mkdir -p release-desktop/windows
           cp -r dist/* release-desktop/windows/
-          echo "@echo off" > release-desktop/windows/run-ganja-house-cea.bat
-          echo "echo Starting Ganja House Koh Lanta CEA Desktop Runtime..." >> release-desktop/windows/run-ganja-house-cea.bat
-          echo "npx --yes serve -s . -l 3000" >> release-desktop/windows/run-ganja-house-cea.bat
+          echo "@echo off" > release-desktop/windows/run-uap-intel-nexus.bat
+          echo "echo Starting UAP Intel Nexus Desktop Runtime..." >> release-desktop/windows/run-uap-intel-nexus.bat
+          echo "npx --yes serve -s . -l 3000" >> release-desktop/windows/run-uap-intel-nexus.bat
           cd release-desktop
-          powershell Compress-Archive -Path windows/* -DestinationPath ganja-house-cea-windows-x64.zip
-          cp ganja-house-cea-windows-x64.zip ../ganja-house-cea-windows-installer.exe || true
+          powershell Compress-Archive -Path windows/* -DestinationPath uap-intel-nexus-windows-x64.zip
+          cp uap-intel-nexus-windows-x64.zip ../uap-intel-nexus-windows-installer.exe || true
 
       - name: Package macOS Artifacts (.dmg / .zip)
         if: matrix.os.name == 'macOS'
         run: |
           mkdir -p release-desktop/macos
           cp -r dist/* release-desktop/macos/
-          echo "#!/bin/bash" > release-desktop/macos/run-ganja-house-cea.sh
-          echo "npx --yes serve -s . -l 3000" >> release-desktop/macos/run-ganja-house-cea.sh
-          chmod +x release-desktop/macos/run-ganja-house-cea.sh
+          echo "#!/bin/bash" > release-desktop/macos/run-uap-intel-nexus.sh
+          echo "npx --yes serve -s . -l 3000" >> release-desktop/macos/run-uap-intel-nexus.sh
+          chmod +x release-desktop/macos/run-uap-intel-nexus.sh
           cd release-desktop
-          zip -r ../ganja-house-cea-macos-arm64-x64.zip macos/
-          hdiutil create -volname "GanjaHouseCEA" -srcfolder macos -ov -format UDZO ../ganja-house-cea-macos.dmg || true
+          zip -r ../uap-intel-nexus-macos-arm64-x64.zip macos/
+          hdiutil create -volname "UAPIntelNexus" -srcfolder macos -ov -format UDZO ../uap-intel-nexus-macos.dmg || true
 
       - name: Package Linux Artifacts (.AppImage / .tar.gz)
         if: matrix.os.name == 'Linux'
         run: |
           mkdir -p release-desktop/linux
           cp -r dist/* release-desktop/linux/
-          echo "#!/bin/bash" > release-desktop/linux/run-ganja-house-cea.sh
-          echo "npx --yes serve -s . -l 3000" >> release-desktop/linux/run-ganja-house-cea.sh
-          chmod +x release-desktop/linux/run-ganja-house-cea.sh
-          tar -czf ganja-house-cea-linux-x64.tar.gz -C release-desktop/linux .
-          cp ganja-house-cea-linux-x64.tar.gz ganja-house-cea-linux.AppImage || true
+          echo "#!/bin/bash" > release-desktop/linux/run-uap-intel-nexus.sh
+          echo "npx --yes serve -s . -l 3000" >> release-desktop/linux/run-uap-intel-nexus.sh
+          chmod +x release-desktop/linux/run-uap-intel-nexus.sh
+          tar -czf uap-intel-nexus-linux-x64.tar.gz -C release-desktop/linux .
+          cp uap-intel-nexus-linux-x64.tar.gz uap-intel-nexus-linux.AppImage || true
 
       - name: Upload Desktop Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.os.name }}
           path: |
-            ganja-house-cea-windows*.*
-            ganja-house-cea-macos*.*
-            ganja-house-cea-linux*.*
+            uap-intel-nexus-windows*.*
+            uap-intel-nexus-macos*.*
+            uap-intel-nexus-linux*.*
           if-no-files-found: warn
