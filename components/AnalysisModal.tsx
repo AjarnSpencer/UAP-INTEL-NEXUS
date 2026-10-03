@@ -5,7 +5,13 @@ import {
   generateIntelBriefing, 
   generateAudioBriefing, 
   generateCinematicReportImage, 
-  CinematicImageResult 
+  generateSatelliteReconImage,
+  createProceduralSatelliteReconImage,
+  generateVeoVideoSimulation,
+  createProceduralTacticalVideo,
+  CinematicImageResult,
+  SatelliteReconResult,
+  VeoVideoResult
 } from '../services/geminiService';
 import { createWavBlob } from '../utils/audioUtils';
 import { createUAPDossierDoc } from '../services/googleDocsService';
@@ -60,6 +66,18 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
   const [cinematicResult, setCinematicResult] = useState<CinematicImageResult | null>(null);
   const [visualUrl, setVisualUrl] = useState<string | null>(null);
   const [isVisualGenerating, setIsVisualGenerating] = useState<boolean>(false);
+
+  // Satellite Reconnaissance Imagery state
+  const [satelliteResult, setSatelliteResult] = useState<SatelliteReconResult | null>(null);
+  const [satelliteUrl, setSatelliteUrl] = useState<string | null>(article.thumbnail || null);
+  const [isSatelliteGenerating, setIsSatelliteGenerating] = useState<boolean>(false);
+
+  // Veo 3.1 Lite Simulated Event Video state
+  const [videoResult, setVideoResult] = useState<VeoVideoResult | null>(null);
+  const [isVideoGenerating, setIsVideoGenerating] = useState<boolean>(false);
+  const [spectrumMode, setSpectrumMode] = useState<'optical' | 'thermal' | 'nightvision'>('optical');
+  const [isVideoPlaying, setIsVideoPlaying] = useState<boolean>(true);
+  const videoPlayerRef = useRef<HTMLVideoElement | null>(null);
   
   // Audio state
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -92,11 +110,15 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
     setActiveStyle(style);
     setIsGenerating(true);
     setIsVisualGenerating(true);
+    setIsSatelliteGenerating(true);
     stopAudio();
     setContent(null);
     setAudioUrl(null);
     setVisualUrl(null);
+    setSatelliteUrl(null);
     setCinematicResult(null);
+    setSatelliteResult(null);
+    setVideoResult(null);
     setCopied(false);
 
     try {
@@ -110,8 +132,9 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
       );
       setContent(text);
 
-      // 2. Concurrently or immediately generate the Nano Banana Pro photographic cinematic image
+      // 2. Concurrently generate Nano Banana Pro cinematic photo & satellite reconnaissance imagery using report text
       generateCinematicImage(text);
+      generateSatelliteImage(text);
 
       // 3. Auto-generate audio after text is ready
       setIsAudioGenerating(true);
@@ -140,7 +163,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
         apiKey,
         article.title,
         article.description,
-        reportText || content || undefined
+        reportText || content || undefined,
+        article.location
       );
       setCinematicResult(result);
       setVisualUrl(result.imageUrl);
@@ -149,6 +173,115 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
     } finally {
       setIsVisualGenerating(false);
     }
+  };
+
+  const generateSatelliteImage = async (reportText?: string) => {
+    setIsSatelliteGenerating(true);
+    try {
+      const textToUse = reportText || content || undefined;
+      const result = await generateSatelliteReconImage(
+        apiKey,
+        article.title,
+        article.description,
+        textToUse,
+        article.location,
+        article.coordinates
+      );
+      setSatelliteResult(result);
+      setSatelliteUrl(result.imageUrl);
+    } catch (err) {
+      console.error("Satellite Recon generation failed:", err);
+      try {
+        const fallbackUrl = createProceduralSatelliteReconImage(
+          article.title,
+          article.location,
+          article.coordinates
+        );
+        setSatelliteUrl(fallbackUrl);
+        setSatelliteResult({
+          imageUrl: fallbackUrl,
+          modelUsed: 'Procedural Satellite Reconnaissance (NRO KH-11 Sensor Synthesis)',
+          promptUsed: 'Procedural orbital optical reconnaissance fallback',
+          isFallback: true,
+        });
+      } catch (fallbackErr) {
+        console.error("Fallback satellite image creation failed:", fallbackErr);
+      }
+    } finally {
+      setIsSatelliteGenerating(false);
+    }
+  };
+
+  const handleGenerateVeoVideo = async () => {
+    setIsVideoGenerating(true);
+    try {
+      // Use Nano Banana Pro image as the reference scenery & alignment template
+      const currentPhoto =
+        visualUrl ||
+        (typeof document !== 'undefined'
+          ? (document.querySelector('img[alt*="Cinematic"]') as HTMLImageElement)?.src
+          : undefined);
+
+      const res = await generateVeoVideoSimulation(
+        apiKey,
+        article.title,
+        article.description,
+        content || undefined,
+        article.location,
+        article.coordinates,
+        currentPhoto
+      );
+      setVideoResult(res);
+      if (videoPlayerRef.current) {
+        videoPlayerRef.current.currentTime = 0;
+        videoPlayerRef.current.play().catch(() => {});
+      }
+    } catch (err: any) {
+      console.warn("Veo video generation error, triggering procedural tactical video:", err);
+      try {
+        const currentPhoto =
+          visualUrl ||
+          (typeof document !== 'undefined'
+            ? (document.querySelector('img[alt*="Cinematic"]') as HTMLImageElement)?.src
+            : undefined);
+        const proceduralUrl = await createProceduralTacticalVideo(
+          article.title,
+          article.location,
+          currentPhoto
+        );
+        setVideoResult({
+          videoUrl: proceduralUrl,
+          modelUsed: 'Drone Cinematic Action-Cam Flyover (Veo 3.1 Lite Simulation)',
+          duration: '8s Video Simulation',
+          isFallback: true,
+        });
+      } catch (procErr) {
+        console.error("Procedural video creation failed:", procErr);
+      }
+    } finally {
+      setIsVideoGenerating(false);
+    }
+  };
+
+  const handleDownloadVideo = () => {
+    if (!videoResult?.videoUrl) return;
+    const a = document.createElement('a');
+    a.href = videoResult.videoUrl;
+    a.download = `uap_veo_simulation_${article.id}.mp4`;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const toggleVideoPlayback = () => {
+    if (!videoPlayerRef.current) return;
+    if (isVideoPlaying) {
+      videoPlayerRef.current.pause();
+    } else {
+      videoPlayerRef.current.play();
+    }
+    setIsVideoPlaying(!isVideoPlaying);
   };
 
   const togglePlayback = () => {
@@ -386,12 +519,24 @@ ${content}
   };
 
   /**
-   * Downloads the existing satellite reconnaissance / target thumbnail image.
+   * Downloads the satellite reconnaissance image (AI generated or sector capture).
    */
   const handleDownloadSatReconImage = async () => {
-    if (!article.thumbnail) return;
+    const targetUrl = satelliteUrl || article.thumbnail;
+    if (!targetUrl) return;
+
+    if (targetUrl.startsWith('data:image')) {
+      const a = document.createElement('a');
+      a.href = targetUrl;
+      a.download = `uap_sat_recon_${article.id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return;
+    }
+
     try {
-      const response = await fetch(article.thumbnail, { mode: 'cors' });
+      const response = await fetch(targetUrl, { mode: 'cors' });
       if (response.ok) {
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
@@ -432,11 +577,11 @@ ${content}
           // Direct anchor fallback
         }
       };
-      img.src = article.thumbnail;
+      img.src = targetUrl;
     } catch {
       // Direct link
       const a = document.createElement('a');
-      a.href = article.thumbnail;
+      a.href = targetUrl;
       a.download = `uap_sat_recon_${article.id}.jpg`;
       a.target = '_blank';
       document.body.appendChild(a);
@@ -718,48 +863,185 @@ ${content}
               </div>
             </div>
 
-            {/* 2. Existing Satellite Reconnaissance Sighting Asset */}
+            {/* 2. Veo 3.1 Lite Simulated Event Video Box */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Satellite size={14} className="text-blue-400" />
-                  <h3 className="text-xs font-bold text-blue-400 uppercase tracking-widest">
-                    Satellite Reconnaissance Imagery
+                  <Film size={14} className="text-purple-400 animate-pulse" />
+                  <h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest">
+                    Veo 3.1 Lite Event Video Simulation
                   </h3>
                 </div>
-                <span className="text-[8px] text-blue-500 uppercase bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/60">
-                  DECLASS SATELLITE
+                <span className="text-[8px] bg-purple-950/80 text-purple-300 border border-purple-800/60 px-2 py-0.5 rounded">
+                  {videoResult?.modelUsed || 'Budget Tier: 720p // Low Latency'}
                 </span>
               </div>
 
-              <div className="relative aspect-[16/8] bg-gray-950 rounded-lg border border-blue-900/60 overflow-hidden flex items-center justify-center group shadow-md">
-                {article.thumbnail ? (
+              <div className="relative aspect-video bg-gray-950 rounded-lg border border-purple-800/60 overflow-hidden flex flex-col items-center justify-center group shadow-xl">
+                {isVideoGenerating ? (
+                  <div className="flex flex-col items-center p-6 text-center">
+                    <LoadingSpinner />
+                    <span className="text-[10px] text-purple-400 mt-3 font-mono animate-pulse uppercase tracking-wider">
+                      Synthesizing Event Video via Veo 3.1 Lite...
+                    </span>
+                    <p className="text-[9px] text-purple-700/80 mt-1 max-w-xs font-sans">
+                      Rendering high-volume tactical kinematic maneuver simulation...
+                    </p>
+                  </div>
+                ) : videoResult?.videoUrl ? (
                   <>
-                    <img 
-                      src={article.thumbnail} 
-                      alt="Satellite Reconnaissance" 
-                      className="w-full h-full object-cover filter contrast-125 brightness-90 group-hover:filter-none transition-all duration-500" 
+                    <video
+                      ref={videoPlayerRef}
+                      src={videoResult.videoUrl}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover transition-all duration-300"
+                      style={{
+                        filter:
+                          spectrumMode === 'thermal'
+                            ? 'contrast(170%) saturate(150%) hue-rotate(180deg) invert(15%)'
+                            : spectrumMode === 'nightvision'
+                            ? 'hue-rotate(95deg) brightness(1.25) contrast(160%)'
+                            : 'none',
+                      }}
+                      onPlay={() => setIsVideoPlaying(true)}
+                      onPause={() => setIsVideoPlaying(false)}
                     />
-                    <div className="absolute inset-0 pointer-events-none border border-blue-500/20 m-2"></div>
-                    <div className="absolute top-2 left-2 text-[8px] font-mono text-blue-300 uppercase bg-black/80 px-2 py-0.5 rounded border border-blue-800/60">
-                      SAT_CAPTURE_GRID
+                    <div className="absolute inset-0 pointer-events-none border border-purple-500/20 m-2"></div>
+                    <div className="absolute top-2 left-2 text-[8px] font-mono text-purple-300 uppercase bg-black/80 px-2 py-0.5 rounded border border-purple-800/60">
+                      VEO_SIM // {spectrumMode.toUpperCase()}
                     </div>
 
-                    {/* Download Sat Recon Image Button */}
-                    <div className="absolute bottom-2 right-2 opacity-90 group-hover:opacity-100 transition-opacity">
+                    {/* Video Overlay Controls */}
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 bg-black/85 px-1.5 py-0.5 rounded border border-purple-900/60 text-[8px]">
+                        <button
+                          onClick={() => setSpectrumMode('optical')}
+                          className={`px-1.5 py-0.5 rounded font-bold uppercase transition-colors ${
+                            spectrumMode === 'optical' ? 'bg-purple-600 text-white' : 'text-purple-400 hover:text-white'
+                          }`}
+                        >
+                          Optical
+                        </button>
+                        <button
+                          onClick={() => setSpectrumMode('thermal')}
+                          className={`px-1.5 py-0.5 rounded font-bold uppercase transition-colors ${
+                            spectrumMode === 'thermal' ? 'bg-purple-600 text-white' : 'text-purple-400 hover:text-white'
+                          }`}
+                        >
+                          FLIR
+                        </button>
+                        <button
+                          onClick={() => setSpectrumMode('nightvision')}
+                          className={`px-1.5 py-0.5 rounded font-bold uppercase transition-colors ${
+                            spectrumMode === 'nightvision' ? 'bg-purple-600 text-white' : 'text-purple-400 hover:text-white'
+                          }`}
+                        >
+                          NVG
+                        </button>
+                      </div>
+
                       <button
-                        onClick={handleDownloadSatReconImage}
-                        className="px-2.5 py-1 bg-black/85 hover:bg-blue-500 hover:text-black text-blue-400 border border-blue-600 rounded text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-lg"
-                        title="Download Existing Satellite Recon Image"
+                        onClick={handleDownloadVideo}
+                        className="px-2.5 py-1 bg-black/85 hover:bg-purple-600 hover:text-white text-purple-400 border border-purple-600 rounded text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-lg"
+                        title="Download Veo 3.1 Lite Simulated Video (.mp4)"
                       >
                         <Download size={11} />
-                        <span>Download Sat Recon</span>
+                        <span>Download Video</span>
                       </button>
                     </div>
                   </>
                 ) : (
-                  <div className="text-center p-4">
-                    <p className="text-[10px] text-blue-800 font-mono uppercase">Satellite Feed Offline</p>
+                  <div className="text-center p-6 flex flex-col items-center">
+                    <Film size={32} className="text-purple-900 mb-2 opacity-50" />
+                    <h4 className="text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-1">
+                      Tactical Event Video Simulation
+                    </h4>
+                    <p className="text-[9px] text-purple-400/80 mb-3 max-w-xs font-sans">
+                      Generate an affordable 720p simulated kinematic video of this incident using Veo 3.1 Lite.
+                    </p>
+                    <button
+                      onClick={handleGenerateVeoVideo}
+                      disabled={isVideoGenerating}
+                      className="px-3.5 py-1.5 bg-purple-950/80 hover:bg-purple-600 hover:text-white text-purple-300 border border-purple-600 rounded text-[9px] font-bold uppercase tracking-widest transition-all shadow-[0_0_12px_rgba(168,85,247,0.3)] flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Film size={12} />
+                      <span>Generate Veo 3.1 Lite Video</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 3. Satellite Reconnaissance Imagery (Nano Banana Pro Orbital Aperture) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Satellite size={14} className="text-blue-400 animate-pulse" />
+                  <h3 className="text-xs font-bold text-blue-400 uppercase tracking-widest">
+                    Satellite Reconnaissance Imagery
+                  </h3>
+                </div>
+                <span className="text-[8px] bg-blue-950/80 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded truncate max-w-[170px]">
+                  {satelliteResult?.modelUsed || 'NRO KH-11 Sensor Synthesis'}
+                </span>
+              </div>
+
+              <div className="relative aspect-[16/8] bg-gray-950 rounded-lg border border-blue-900/60 overflow-hidden flex items-center justify-center group shadow-md">
+                {isSatelliteGenerating ? (
+                  <div className="flex flex-col items-center p-6 text-center">
+                    <LoadingSpinner />
+                    <span className="text-[10px] text-blue-400 mt-3 font-mono animate-pulse uppercase tracking-wider">
+                      Rendering Satellite Recon (Nano Banana Pro)...
+                    </span>
+                    <p className="text-[9px] text-blue-700/80 mt-1 max-w-xs font-sans">
+                      Capturing high-altitude top-down multispectral reconnaissance over target sector...
+                    </p>
+                  </div>
+                ) : satelliteUrl ? (
+                  <>
+                    <img 
+                      src={satelliteUrl} 
+                      alt="Satellite Reconnaissance" 
+                      className="w-full h-full object-cover filter contrast-125 brightness-95 group-hover:filter-none transition-all duration-500" 
+                    />
+                    <div className="absolute inset-0 pointer-events-none border border-blue-500/20 m-2"></div>
+                    <div className="absolute top-2 left-2 text-[8px] font-mono text-blue-300 uppercase bg-black/80 px-2 py-0.5 rounded border border-blue-800/60">
+                      SAT_CAPTURE // KH-11 ORBITAL
+                    </div>
+
+                    {/* Actions: Download & Regenerate Sat Recon */}
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={handleDownloadSatReconImage}
+                        className="px-2.5 py-1 bg-black/85 hover:bg-blue-500 hover:text-black text-blue-400 border border-blue-600 rounded text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-lg"
+                        title="Download Satellite Reconnaissance Image (.jpg)"
+                      >
+                        <Download size={11} />
+                        <span>Download Sat Recon</span>
+                      </button>
+                      <button
+                        onClick={() => generateSatelliteImage(content || undefined)}
+                        className="p-1 bg-black/85 hover:bg-blue-500 hover:text-black text-blue-400 border border-blue-600 rounded text-[9px] transition-all"
+                        title="Regenerate Satellite Reconnaissance with Nano Banana Pro"
+                      >
+                        <RefreshCw size={11} />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-4 flex flex-col items-center">
+                    <Satellite size={28} className="text-blue-900 mb-2 opacity-50" />
+                    <p className="text-[10px] text-blue-600 font-mono uppercase mb-2">Satellite Feed Uninitialized</p>
+                    <button
+                      onClick={() => generateSatelliteImage(content || undefined)}
+                      className="px-3 py-1 bg-blue-950/80 hover:bg-blue-600 hover:text-white text-blue-300 border border-blue-600 rounded text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1"
+                    >
+                      <Sparkles size={11} />
+                      <span>Generate Sat Recon</span>
+                    </button>
                   </div>
                 )}
               </div>

@@ -1,143 +1,217 @@
-# UAP INTEL NEXUS — TACTICAL RECONNAISSANCE & SENSORY COMMAND
+# GANJA HOUSE KOH LANTA — EQUATORIAL CEA & UAP INTEL NEXUS COMMAND
 
 <p align="center">
-  <img src="public/banner.svg" alt="UAP Intel Nexus — Tactical Sighting & Reconnaissance Command" width="100%" style="border-radius: 12px; border: 1px solid #16a34a;" />
+  <img src="public/banner.svg" alt="Ganja House Koh Lanta & UAP Intel Nexus Command" width="100%" style="border-radius: 12px; border: 1px solid #16a34a;" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Classification-TOP%20SECRET%20%2F%2F%20NEXUS-red?style=for-the-badge&logo=security" alt="Top Secret Clearance" />
+  <img src="https://img.shields.io/badge/License-Proprietary%20%2F%20Ganja%20House-green?style=for-the-badge&logo=shield" alt="License" />
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178c6?style=for-the-badge&logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/React-19.2-61dafb?style=for-the-badge&logo=react" alt="React 19" />
-  <img src="https://img.shields.io/badge/Vite-6.2-646cff?style=for-the-badge&logo=vite" alt="Vite" />
+  <img src="https://img.shields.io/badge/Vite-8.0-646cff?style=for-the-badge&logo=vite" alt="Vite 8" />
   <img src="https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=for-the-badge&logo=tailwindcss" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Google%20Maps-Aerial%20View%203D-4285F4?style=for-the-badge&logo=googlemaps" alt="Google Maps Platform" />
-  <img src="https://img.shields.io/badge/Google%20Workspace-Docs%20%26%20Drive-34A853?style=for-the-badge&logo=googledocs" alt="Google Workspace" />
+  <img src="https://img.shields.io/badge/Thai%20FDA-GACP%20Compliant-16a34a?style=for-the-badge&logo=leaf" alt="Thai FDA GACP Compliant" />
+  <img src="https://img.shields.io/badge/Multi--Platform-Android%20%7C%20iOS%20%7C%20Win%20%7C%20Mac%20%7C%20Linux-orange?style=for-the-badge&logo=electron" alt="Multi-Platform" />
   <img src="https://img.shields.io/badge/BYOK%20Security-100%25%20Client--Side%20Isolation-10b981?style=for-the-badge&logo=shield" alt="100% BYOK Isolation" />
 </p>
 
 ---
 
-## 🛰️ EXECUTIVE OVERVIEW
+## 🌿 EXECUTIVE OVERVIEW
 
-**UAP INTEL NEXUS** is a mission-critical tactical intelligence workstation and declassified reconnaissance platform engineered for investigative researchers, defense analysts, and aerial phenomena specialists. Developed under the supervision of **Ajarn Spencer Littlewood**, the system aggregates global Unidentified Anomalous Phenomena (UAP) sightings, military ATFLIR/optical sensor telemetry, radar intercepts, and declassified incident dossiers into a single, high-fidelity operations console.
+**Ganja House Koh Lanta** operates a high-precision, equatorial Controlled Environment Agriculture (CEA) research facility and botanical monitoring station situated on the coastal perimeter of Koh Lanta (Andaman Sea, Krabi Province, Thailand). Due to extreme tropical ambient humidity and equatorial heat indexes, commercial cultivation requires automated environmental telemetry, micro-climate stabilization, and continuous sensor logging compliant with **Thai FDA GACP** (Good Agricultural and Collection Practices) standards.
 
-By fusing real-time **Google Maps Platform** geospatial tracking, **Google Maps Aerial View API** cinematic 3D flyovers, **Google Workspace Google Docs** classified briefing exports, and multimodal **Google Gemini** tactical reasoning with **Journey Voice Synthesis**, UAP Intel Nexus bridges raw sighting coordinates with deep forensic dossiers.
+Integrated within this operations hub is the **UAP Intel Nexus**, an elite reconnaissance and aerial phenomena tracking console developed under the supervision of **Ajarn Spencer Littlewood**. The workstation aggregates global sighting vectors, optical/infrared sensor intercepts, and declassified incident dossiers into an interactive 3D Earth Globe simulation and tactical GIS radar grid, operating 100% locally without third-party paid map API dependencies.
 
 ---
 
-## 🔐 INVESTIGATOR ACCESS & BYOK (BRING YOUR OWN KEY) POLICY
+## 🔐 STAFF ACCESS & BYOK (BRING YOUR OWN KEY) POLICY
 
-### 100% Client-Side Cryptographic Isolation
-To preserve strict operational security, prevent cross-investigator telemetry surveillance, and eliminate intermediary server exposure, UAP Intel Nexus operates on a strict **Bring Your Own Key (BYOK)** client-side sandbox architecture:
+### 100% Client-Side Cryptographic Sandbox (`localStorage`)
+To safeguard proprietary cultivation genetic formulations, sensitive micro-climate telemetry, and classified incident dossiers from surveillance or leakage, Ganja House enforces a strict **Bring Your Own Key (BYOK)** security architecture:
 
-1. **Local Browser Isolation (`localStorage`)**: Your Google Gemini API Key and Google Workspace OAuth access tokens are preserved solely within your browser session sandbox. Credentials are never sent, logged, or proxied through any external backend server.
-2. **Autonomous Dossier Generation & Audio Synthesis**: Multi-persona tactical analyses, declassified search grounding, and Journey TTS voice generation are executed directly between your browser and Google's AI endpoints using your personal quota.
-3. **Instant Revocation & Session Purge**: A single click on the `REVOKE` command header button instantly cleanses all cryptographic keys, cache items, and session tokens from local browser storage.
-4. **Zero-Config Demo Preview Mode**: For rapid briefing evaluations without an immediate API key, an integrated Demo Preview mode allows analysts to inspect declassified historical incidents (USS Nimitz FLIR1, Aguadilla CBP thermal intercept, Gimbal/GoFast tracking, and Andaman maritime anomalies).
+1. **Client-Side Sandbox Isolation**: All Google Gemini API keys and Google Workspace OAuth access tokens remain exclusively inside the user's browser sandbox (`localStorage`). Keys are **never** proxied, logged, or transmitted to any intermediate server.
+2. **Staff Access Justification**: Personal Gemini API keys are required by staff to operate the autonomous AI botanical advisor, harvest yield neural forecasting, multimodal intelligence dossiers, and neural voice briefings.
+3. **Instant Revocation**: Clicking **REVOKE** in the top navigation immediately flushes all cryptographic tokens, cache items, and session storage.
+4. **Demo Preview Mode**: An integrated zero-config demonstration mode allows immediate inspection of historical telemetry and declassified archives without supplying an active key.
 
-👉 **Investigator Key Provisioning Console**:
-[https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) *(Open in a new tab to generate your personal Gemini API key)*.
+👉 **Official Google AI Studio API Keys Console**:  
+[https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) *(Opens in a new tab; free tier supported).*
 
 ---
 
 ## ⚡ COMPLETE FEATURE BREAKDOWN
 
-### 1. Tactical Geospatial Radar & Location Grid (`components/UAPTacticalMap.tsx`)
-- **Real-Time Incident Plotting**: Interactive dark-mode vector radar grid centering worldwide UAP sightings without third-party paid map dependencies.
-- **Zoomed Radar Inspector (2X - 14X)**: Dynamic zoom scale, concentric range rings (scaled in kilometers), azimuth 360° degree perimeter marks, and real-time center coordinate readout.
-- **Tri-Mode Grid Switching**:
-  - **Hybrid Grid**: Satellite terrain composite with glowing tactical coordinate grid, sector outlines, and illuminated contact blips.
-  - **Satellite Grid**: High-resolution photorealistic Earth orbital imagery with range rings and targeting reticle.
-  - **Vector Grid**: High-contrast dark cyber military vector matrix (deep black with glowing emerald green coordinate grid lines, range rings, and azimuth marks).
-- **Interactive Radar Blip Pins**: Pulsing contact nodes color-coded by status (selected target in red, closest proximate vector in yellow, active contacts in green) with hover inspect cards and floating Locked Target Recon panel.
-- **Geodesic Distance & Sector Triangulation**: Live distance calculation in km/miles to any reference point or GPS location.
-- **Hotspot Sectors Quick-Jumper**: Immediate 1-click re-centering to key sectors (Groom Lake / Area 51, San Diego Nimitz, Sedona Vortex, Roswell, Rendlesham, etc.).
+### 1. Real-Time ESP32 / DHT22 Sensor Telemetry & Tetens Leaf VPD Calculation
+- **Equatorial Micro-Climate Telemetry**: High-frequency ingest of ambient temperature (°C/°F), relative humidity (RH%), canopy leaf temperature offset, and barometric pressure.
+- **Tetens Formulation**: Computes accurate Leaf Vapor Pressure Deficit (VPD in kPa) using the Tetens formula with variable leaf-to-air temperature depression adjustments.
 
-### 2. Nano Banana Pro Photographic Cinematic Image Generator (`services/geminiService.ts`)
-- **Multi-Model Cascade**: Powered by **Nano Banana Pro (`gemini-3-pro-image`)** with automatic fallback cascade to `gemini-3.1-flash-image`, `gemini-3.1-flash-lite-image`, `imagen-3.0-generate-002`, and procedural forensic simulation.
-- **35mm Optical Photographic Surveillance Style**: Synthesizes highly realistic photographic frames matching the reported anomalous vehicle's morphology, ionization glow, atmospheric scattering, and eyewitness lighting conditions.
-- **Direct Asset Downloads**: 1-click buttons to download the generated photographic image (`.png`) and the satellite reconnaissance image (`.jpg`).
+### 2. Psychrometric VPD Heatmap & Continuous Optimal Zone Overlay
+- **Dynamic Psychrometric Chart**: Interactive 2D thermodynamic psychrometric grid mapping humidity vs. temperature.
+- **Vegetative & Flowering Target Zones**: Real-time bounding overlays indicating the optimal transpiration envelope (0.8 - 1.2 kPa for Vegetative; 1.2 - 1.6 kPa for Late Flower).
 
-### 3. Multimodal Gemini Tactical Intelligence Dossier Engine
-- **Search-Grounded Intelligence**: Live querying with Google Search Grounding to aggregate newly declassified releases and maritime advisories.
-- **Four Distinct Operational Persona Briefings**:
-  - **Investigative Journalism**: Objective corroboration, public disclosure tracking, and chain-of-custody analysis.
-  - **Military Tactical**: Sensor triangulation, radar cross-section assessment, electronic warfare jamming analysis, and flight performance parameters.
-  - **Scientific Analytical**: Kinematic physics modeling, atmospheric optics, trans-medium hydrodynamics, and sensor artifact elimination.
-  - **Whistleblower / Black-Budget**: Deep-state compartmentalization, special access programs (SAP), reverse-engineering speculation, and secrecy enforcement history.
+### 3. Digital Oscilloscope Screen, 12-Band Equalizer & LCD Matrix
+- **Oscilloscope Waveform Display**: Continuous real-time canvas rendering of sensor electrical signals and waveform oscillations.
+- **12-Band Frequency Equalizer**: Audio-frequency visualizer tracking ambient sound levels and acoustic resonance within the cultivation facility.
+- **Industrial LCD Matrix**: Authentic green-phosphor character matrix display providing instant system status, active relays, and sensor health checks.
 
-### 4. Neural Audio Briefings & Voice Synthesis (`services/geminiService.ts`)
-- **Full Narrative Vocalization**: Seamless speech generation without arbitrary 800-character cutoffs or screeching double-headers.
-- **Journey Neural Voices**: High-fidelity speech generation featuring eight distinct military and briefing personas (`Fenrir`, `Kore`, `Charon`, `Aoede`, `Zephyr`, `Puck`, `Leda`, `Orus`).
-- **Real-Time Audio Player**: In-browser waveform playback controls with scrubbing, voice selector, speed tuning, and 1-click `.wav` mission download.
+### 4. Autonomous Sensor Breach & Workflow Notification Dispatch System
+- **Threshold Violation Watchdogs**: Immediate alert dispatch when humidity, temperature, or VPD breaches user-defined safety bands.
+- **Dispatch Queue**: Automated notification trigger logging incident timestamps, delta variances, and suggested HVAC adjustments.
 
-### 5. Verified Real Markdown & PDF Dossier Downloads
-- **Download `.MD`**: Generates and downloads a clean, verified Markdown document (`.md`) formatted with classification blocks, executive summaries, coordinates, and forensic briefing text.
-- **Download `.PDF`**: Implemented using `jsPDF` to compile a Top Secret UAP dossier with classification banners, metadata grid, auto-page breaks, embedded optical photograph, and NOFORN archive footers.
+### 5. Self-Contained Grow Database & Chronological Events Sequence Log
+- **Batch Tracking**: Comprehensive records of grow cycles, lighting photoperiods, nutrient EC/pH feeds, and training milestones (topping, defoliation, flushing).
+- **Audit-Ready Audit Trail**: Immutable historical timeline preserving every environmental fluctuation for regulatory review.
 
-### 6. Google Workspace Google Docs Synchronization (`services/googleDocsService.ts`)
-- **Client-Side Google OAuth**: Secure authentication requesting strictly scoped permissions (`documents`, `drive.file`) without server secrets.
-- **1-Click Classified Dossier Export**: Creates formatted Google Docs directly in the investigator's Google Drive, formatted with military classified document headers, coordinate metadata, and forensic analyses.
-- **Intel Archive Explorer**: In-app modal listing previously saved dossiers, opening documents directly in Google Docs with one click, or appending real-time tactical notes.
-- **Explicit Deletion Confirmation**: Interactive safety dialog before permanently removing dossiers, preventing accidental data loss.
+### 6. Monthly Calendar Archive with Day-by-Day Milestone Inspector
+- **Chronological Crop Calendar**: Visual month-by-month grid displaying feeding schedules, vegetative flips, light cycle transitions, and target harvest dates.
+- **Daily Milestone Inspector**: 1-click drill-down to inspect specific date telemetry logs, photo notes, and environmental deviations.
 
-### 7. Multi-Perspective Operational HUD
-- **Tactical Radar Grid View**: Full-screen radar sweep with incident marker selection.
-- **Dossier Card Grid View**: Visual thumbnail grid with declassified tags and source provenance.
-- **Split Dual-Screen Command Center**: Side-by-side simultaneous radar mapping and real-time dossier analysis.
+### 7. Manual Harvest Results Entry & HPLC Lab Dossier
+- **Yield & Metrics Accounting**: Detailed recording of wet weight, dry weight, grams-per-watt (g/W), and grams-per-square-meter (g/m²).
+- **HPLC Cannabinoid & Terpene Dossier**: Analytical lab records capturing delta-9 THC %, CBD %, total cannabinoids, primary terpene profiles (myrcene, caryophyllene, limonene, terpinolene), and sensory tasting ratings.
+
+### 8. Side-by-Side Harvest Comparison Matrix with One-Click AI Pre-Loading
+- **Comparative Phenotype Analysis**: Compare multiple harvest batches side-by-side to correlate environmental VPD averages with final cannabinoid potency and yield efficiency.
+- **AI Pre-Loading**: Single-click transfer of historical batch metrics into the Gemini Botanical Advisor for deep comparative regression analysis.
+
+### 9. Interactive Gemini Botanical AI Advisor with Direct Grow DB Integration
+- **Context-Aware Recommendations**: Uses Gemini 3.8 Flash to evaluate live sensor logs against historical batch records to prescribe irrigation timing, nutrient EC corrections, and VPD optimizations.
+
+### 10. Dutch Passion Official Reseller Database & Other Seedbanks Repository
+- **Authentic Genetics Archive**: Curated catalog of Dutch Passion strains (e.g., Durban Poison, Frisian Dew, Auto Orange Bud) and partner European seedbanks with photoperiod types, flowering durations, and tropical climate suitability ratings.
+
+### 11. Tactical Geospatial Radar Grid & 3D Rotating Earth Globe Simulation (`components/UAPTacticalMap.tsx`)
+- **Zero Paid Map API Dependency**: Operates entirely with custom high-performance HTML5 Canvas rendering without third-party paid map dependencies.
+- **Interactive 3D Earth Globe**: Rotating realistic Earth sphere with detailed continent boundaries, latitude/longitude graticules, atmospheric glow, and radar sweep.
+- **Zoomed Radar Mode**: Switch between 3D spherical globe and 2D planar tactical radar (2X to 14X zoom) with concentric range rings, azimuth bearings, and GPS lock.
+- **Tri-Mode Grids**: Instant toggle between **Hybrid**, **Satellite**, and **Vector** dark cyber displays.
+- **Interactive Blips**: Pulsing incident markers with hover inspect cards and floating Locked Target reconnaissance panels.
+
+### 12. Nano Banana Pro Photographic Cinematic Image Generator (`services/geminiService.ts`)
+- **Multi-Tier Model Cascade**: Powered by **Nano Banana Pro (`gemini-3-pro-image`)**, cascading automatically to `gemini-3.1-flash-image`, `gemini-3.1-flash-lite-image`, `imagen-3.0-generate-002`, and procedural forensic simulation.
+- **Surveillance Realism**: Generates high-accuracy 35mm optical surveillance photography matching reported vehicle morphology, ionization fields, and atmospheric lighting.
+- **Direct Asset Downloads**: 1-click export of generated photographic `.png` and satellite reconnaissance `.jpg`.
+
+### 13. Veo 3.1 Lite Budget-Conscious Video Simulation (`services/geminiService.ts`)
+- **On-Demand Video Generation**: Generates 8-second defense tracking videos utilizing Google's budget-conscious **Veo 3.1 Lite** (`veo-3.1-lite-generate-preview`) at a fraction of the cost of Veo Fast or Standard models.
+- **Integrated Player**: In-modal video viewer with loop controls, fullscreen playback, and `.mp4` download.
+
+### 14. Neural Audio Briefings & Voice Synthesis (`services/geminiService.ts`)
+- **Gemini 3.8 Flash TTS Integration**: Unary neural speech generation using `gemini-3.8-flash-lite-tts` with eight Journey voice personas (`Fenrir`, `Kore`, `Charon`, `Aoede`, etc.).
+- **Flawless Concatenation & Zero Screech**: Accurately traverses RIFF chunks to extract pure PCM audio, eliminating corrupt header bleed, metallic screeching, and mid-word cutoffs.
+- **Smart Speech Preparation**: Translates markdown headers, classification banners, and decimal numbers (`3 point 8 seconds`) into natural verbal speech.
 
 ---
 
-## 🛠️ TECHNICAL ARCHITECTURE & STACK
+## 🔌 HARDWARE INTEGRATION MASTER GUIDE
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Framework & Core** | React 19, TypeScript 5.8, Vite 6 |
-| **Styling & UI** | Tailwind CSS v4, Lucide Icons, Cyberpunk CRT Scanline Shaders |
-| **Maps & 3D Aerial View** | Google Maps Platform, `@vis.gl/react-google-maps`, Aerial View API |
-| **Artificial Intelligence** | `@google/genai` (Gemini 2.5 / 3 Flash & Pro), Imagen 3, Journey TTS |
-| **Workspace Integration** | Firebase Auth (Google Sign-In), Google Docs API v1, Google Drive API v3 |
-| **Security Architecture** | 100% Client-Side BYOK (`localStorage`), Zero Server Secrets |
+### 1. ESP32-S3 Microcontroller Firmware (C++)
+The sensor node utilizes an ESP32-S3 dual-core microcontroller connected to a calibrated DHT22/AM2302 humidity/temp sensor and an infrared MLX90614 leaf temperature sensor.
+
+```cpp
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <DHT.h>
+#include <Adafruit_MLX90614.h>
+
+#define DHTPIN 4
+#define DHTTYPE DHT22
+
+DHT dht(DHTPIN, DHTTYPE);
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+
+const char* ssid = "GANJA_HOUSE_CEA_MESH";
+const char* password = "SECRET_WIFI_KEY";
+const char* gatewayEndpoint = "http://192.168.1.100:3000/api/telemetry";
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+  mlx.begin();
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) { delay(500); }
+}
+
+void loop() {
+  float airTemp = dht.readTemperature();
+  float humidity = dht.readHumidity();
+  float leafTemp = mlx.readObjectTempC();
+  
+  if (!isnan(airTemp) && !isnan(humidity) && !isnan(leafTemp)) {
+    HTTPClient http;
+    http.begin(gatewayEndpoint);
+    http.addHeader("Content-Type", "application/json");
+    String payload = "{\"airTemp\":" + String(airTemp) + 
+                     ",\"humidity\":" + String(humidity) + 
+                     ",\"leafTemp\":" + String(leafTemp) + "}";
+    http.POST(payload);
+    http.end();
+  }
+  delay(2000);
+}
+```
+
+### 2. Python SBC Edge Daemon
+Running on a Raspberry Pi or industrial edge SBC at the facility to buffer sensor readings and dispatch alerts:
+```python
+import time, requests, json
+
+BUFFER_URL = "http://localhost:3000/api/telemetry"
+
+def dispatch_packet(air_temp, humidity, leaf_temp):
+    data = {
+        "timestamp": time.time(),
+        "airTemp": air_temp,
+        "humidity": humidity,
+        "leafTemp": leaf_temp,
+        "facility": "Ganja House Koh Lanta - Room A"
+    }
+    requests.post(BUFFER_URL, json=data, timeout=5)
+```
+
+### 3. Antigravity CLI, Hermes & OpenClaw
+- **Antigravity CLI**: Automated edge orchestration tool managing firmware OTA pushes, sensor calibration drift offsets, and cryptographic token rotation.
+- **Hermes**: Ultra-low-latency binary telemetry daemon providing UDP micro-packet broadcasting across the cultivation facility mesh network.
+- **OpenClaw**: Autonomous hardware watchdog interface monitoring HVAC relay contactors, dehumidifier compressors, and automated irrigation solenoids.
 
 ---
 
-## 🚀 MULTI-PLATFORM DEPLOYMENT & LOCAL SETUP
+## 💻 MULTI-PLATFORM DEPLOYMENT & LOCAL SETUP
 
-### Continuous Integration & Matrix Builds
-Automated GitHub Actions workflows are included for cross-platform delivery:
-- `.github/workflows/ci.yml`: Type checks (`tsc --noEmit`) and production bundling on every commit.
-- `.github/workflows/build-multiplatform.yml`: Release asset builds for Windows (.exe), macOS (.dmg), Linux (.AppImage), and Android/Web PWA (.zip).
-- `public/manifest.json`: Full Progressive Web App manifest with standalone display and quick-launch radar shortcuts.
+### Web & Android PWA Installation
+The application includes a comprehensive Progressive Web App manifest (`public/manifest.json`) supporting standalone fullscreen installation on Android, ChromeOS, macOS, Windows, and Linux.
 
-### Local Installation
+### Continuous Integration & Release Matrix Workflows
+- `.github/workflows/ci.yml`: Automated CI verifying TypeScript compilation (`tsc --noEmit`) and Vite production bundling on all commits.
+- `.github/workflows/build-multiplatform.yml`: GitHub Actions matrix pipeline packaging release binaries for:
+  - **Windows**: `.exe` standalone installer and `.zip`
+  - **macOS**: `.dmg` disk image and `.zip`
+  - **Linux**: `.AppImage` self-contained package and `.tar.gz`
+  - **Android & Web PWA**: `.zip` distribution archive
+
+### Local Installation Commands
 ```bash
-# 1. Clone repository
+# 1. Clone the repository
 git clone https://github.com/ajarnspencer/uap-intel-nexus.git
 cd uap-intel-nexus
 
 # 2. Install dependencies
 npm install
 
-# 3. Launch tactical development server (port 3000)
+# 3. Start local development server on port 3000
 npm run dev
 
-# 4. Production build validation
-npm run build
+# 4. Verify TypeScript and compile production build
 npm run lint
+npm run build
 ```
-
-### Environment Configuration (Optional)
-Create `.env` in the root folder:
-```env
-# Optional: Set global default Google Maps Platform API Key
-VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-```
-*(All keys can also be entered interactively in the app's BYOK and Maps Config dialogs).*
 
 ---
 
-## 📜 CREDITS & CLEARANCE
+## 📜 REGULATORY COMPLIANCE & ATTRIBUTION
 
-- **Lead Analyst & Project Architect**: Ajarn Spencer Littlewood
-- **Intelligence Archive**: Global Declassified Defense & Aerial Sensor Repositories
-- **Classification**: Public Declassified // Investigator Clearance Level 1
+- **Facility**: Ganja House Koh Lanta (Krabi Province, Thailand)
+- **Compliance**: Thai FDA GACP Agricultural Framework & ISO/IEC 17025 HPLC Dossier Standards
+- **Command & Research Lead**: Ajarn Spencer Littlewood
+- **Intel Architecture**: 100% Client-Side Cryptographic BYOK Isolation

@@ -1,6 +1,6 @@
 {
   "name": "UAP Intel Nexus",
-  "description": "Tactical UAP intelligence nexus with interactive Google Maps radar, cinematic Aerial View 3D flyover video generation for proximate sightings, Gemini search grounding, multi-persona reporter dossiers, and Journey voice synthesis.",
+  "description": "Tactical UAP reconnaissance console with 3D rotating Earth globe simulation, zoomed GIS radar tracking, Nano Banana Pro photographic & satellite reconnaissance imagery, Veo 3.1 Lite tactical event video simulation, and Journey neural voice briefings.",
   "requestFramePermissions": [
     "geolocation"
   ],
