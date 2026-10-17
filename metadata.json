@@ -1,6 +1,6 @@
 {
   "name": "UAP Intel Nexus",
-  "description": "Tactical UAP reconnaissance console with 3D rotating Earth globe simulation, zoomed GIS radar tracking, Nano Banana Pro photographic & satellite reconnaissance imagery, Veo 3.1 Lite tactical event video simulation, and Journey neural voice briefings.",
+  "description": "Tactical UAP intelligence dossiers workstation with Nano Banana Pro photographic & satellite reconnaissance imagery, Journey neural voice briefings, and 1-click YouTube MP4 video export.",
   "requestFramePermissions": [
     "geolocation"
   ],

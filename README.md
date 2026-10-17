@@ -20,9 +20,9 @@
 
 **UAP Intel Nexus** (also known as **UAPHub**) is an advanced tactical aerial phenomena tracking console and intelligence synthesis workstation developed under the supervision of **Ajarn Spencer Littlewood**. 
 
-Built for defense researchers, investigative analysts, and aerospace observers, the platform aggregates real-time global UAP/UFO encounter telemetry, sensor intercepts, and declassified incident dossiers into an interactive 3D Earth Globe simulation and tactical GIS radar grid—operating **100% locally with zero paid map API dependencies**.
+Built for defense researchers, investigative analysts, and aerospace observers, the platform aggregates real-time global UAP/UFO encounter telemetry, sensor intercepts, and declassified incident dossiers into a streamlined, high-speed single-feed intelligence workstation.
 
-By synthesizing real-time search grounding, multimodal visual reconstructions (**Nano Banana Pro** photographic surveillance and **KH-11 top-down satellite reconnaissance**), budget-conscious kinematic event video simulations (**Veo 3.1 Lite**), and multi-voice neural audio briefings, UAP Intel Nexus delivers an end-to-end command deck for anomalous phenomena monitoring.
+By synthesizing real-time search grounding, multimodal visual reconstructions (**Nano Banana Pro** photographic surveillance and **KH-11 top-down satellite reconnaissance**), embedded **Google Maps Platform** sighting geolocation, multi-voice neural audio briefings, and 1-click **YouTube-ready 16:9 MP4 video synthesis**, UAP Intel Nexus delivers an end-to-end command deck for anomalous phenomena monitoring and publication.
 
 ---
 
@@ -32,7 +32,7 @@ By synthesizing real-time search grounding, multimodal visual reconstructions (*
 To guarantee privacy and protect classified research dossiers, UAP Intel Nexus enforces a strict **Bring Your Own Key (BYOK)** architecture:
 
 1. **Zero External Logging**: Your Google Gemini API keys and Google Workspace OAuth access tokens remain exclusively inside your browser sandbox (`localStorage`). Keys are **never** proxied, logged, or transmitted to any third-party server.
-2. **Direct Browser Execution**: All calls to `@google/genai` (text briefing, TTS audio, Nano Banana Pro image generation, Veo video simulations, and Search Grounding) run directly from client-side Web APIs.
+2. **Direct Browser Execution**: All calls to `@google/genai` (text briefing, TTS audio, Nano Banana Pro image generation, and Search Grounding) run directly from client-side Web APIs.
 3. **Instant Revocation**: Clicking **REVOKE KEY** in the navigation header flushes all cryptographic tokens, cache items, and session storage immediately.
 4. **Zero-Config Demo Preview Mode**: Built-in demonstration telemetry allows immediate exploration of historical declassified incident files (Nimitz Tic-Tac, Aguadilla, Gimbal/GoFast, Andaman Sea) without requiring an API key.
 
@@ -43,25 +43,18 @@ To guarantee privacy and protect classified research dossiers, UAP Intel Nexus e
 
 ## ⚡ COMPLETE FEATURE BREAKDOWN
 
-### 1. Tactical Geospatial Radar Grid & 3D Rotating Earth Globe (`components/UAPTacticalMap.tsx`)
-- **Zero Paid Map Dependencies**: Built entirely with custom HTML5 Canvas rendering—no Google Maps Platform billing, Mapbox tokens, or external API keys needed.
-- **Interactive 3D Earth Globe Simulation**: Continuous rotational 3D Earth sphere with realistic continent coastlines, latitude/longitude graticule lines, glowing atmospheric edge, and real-time sweeping radar beam.
-- **Zoomed 2D Planar Tactical Radar**: Switch smoothly from 3D orbital view to planar tactical radar (2X to 14X zoom levels) featuring concentric range rings, azimuth bearings, and GPS coordinate lock.
-- **Tactical Display Modes**: Toggle between **Hybrid**, **Satellite**, and **Vector** dark cyber themes.
-- **Active Incident Blips**: Interactive target beacons with proximity distance readouts (km and miles), hover telemetry cards, and locked reconnaissance target inspector.
+### 1. Single-View Intelligence Dossiers Workstation (`App.tsx`, `components/ArticleCard.tsx`)
+- **Fast, Authoritative Intel Stream**: Clean single-view dossier feed with zero-pill typographic discipline, responsive 3-column tactical grid, and real-time sensor status indicator.
+- **Dynamic Grid Controls**: Instantly configure display density (9, 18, 27, 45, 99 dossiers per packet) and refresh the live grid.
+- **Original Source Document Attribution**: Direct access to originating defense releases, SCU reports, and historical archives.
 
-### 2. Live Global Sighting Ingest & Sensor Grounding (`services/newsService.ts`)
-- **Gemini Search Grounding**: Continuously searches the open web and defense reporting channels (MUFON, NUFORC, The Debrief, AARO.mil, DoD Historical Archives) for the latest verified sightings within the last 48 hours.
-- **Automatic Geolocation Triangulation**: Automatically resolves physical locations, sector boundaries, and coordinates, computing real-time relative distance from the observer.
+### 2. Embedded Google Maps Sighting Geolocation (`components/IncidentGoogleMap.tsx`)
+- **Embedded in Dossier Modal**: Directly inspect physical sighting locations within each report.
+- **Tri-Spectrum Views**: Toggle seamlessly between **Hybrid** (satellite with roads/labels), **Satellite** (raw optical orbital), and **Vector** (tactical dark cyber theme).
+- **Coordinate Lock & Marker**: Centers on target GPS coordinates with custom radar beacon pin and metadata InfoWindow.
+- **External Google Maps Link**: 1-click direct link to open the exact coordinates in Google Maps for street view and regional topography.
 
-### 3. Multimodal Intelligence Dossiers in 4 Analyst Personas (`components/AnalysisModal.tsx`)
-- **Four Distinct Perspectives**:
-  - 🏛️ **Academic**: Methodical, scientific, sensor-calibrated analysis referencing physics, radar cross-sections, and peer-reviewed aerospace metrics.
-  - ⚡ **Gonzo**: High-octane, immersive field-journalist narrative putting the reader directly at the encounter perimeter.
-  - 🔍 **Skeptic**: Rigorous critical investigation evaluating sensor artifacts, optical illusions, thermal blooming, and mundane explanations.
-  - 🌐 **Viral**: Fast-paced, high-engagement briefing optimized for public disclosure broadcasts.
-
-### 4. Nano Banana Pro Photographic Surveillance Reconstructions (`services/geminiService.ts`)
+### 3. Nano Banana Pro Photographic Surveillance Reconstructions (`services/geminiService.ts`)
 - **Multi-Tier Image Model Cascade**:
   - **Tier 1**: **Nano Banana Pro (`gemini-3-pro-image`)** in 1K 16:9 widescreen.
   - **Tier 2**: Nano Banana 2 (`gemini-3.1-flash-image`).
@@ -69,31 +62,30 @@ To guarantee privacy and protect classified research dossiers, UAP Intel Nexus e
   - **Tier 4**: Imagen 3 (`imagen-3.0-generate-002`).
   - **Tier 5**: Procedural Forensic Sensor Simulation Canvas (offline/quota fallback).
 - **35mm Optical Surveillance Fidelity**: Synthesizes photorealistic reconnaissance camera frames matching the exact real-world geography, atmospheric conditions, and observed vehicle morphology.
-- **Direct Asset Export**: 1-click download of generated high-res `.png` photos.
+- **Direct Asset Export**: 1-click download of generated high-res `.png` photos and instant regeneration.
 
-### 5. Top-Down Satellite Reconnaissance Imagery (`services/geminiService.ts`)
-- **Post-Report Landmark & Geolocation Prompting**: Formulates satellite imagery prompts **after** the dossier text is generated, extracting geographical landmarks, terrain features, and sighting telemetry directly from the report.
+### 4. Top-Down Satellite Reconnaissance Imagery (`services/geminiService.ts`)
+- **Post-Report Landmark & Geolocation Prompting**: Formulates satellite imagery prompts after the dossier text is generated, extracting geographical landmarks, terrain features, and sighting telemetry directly from the report.
 - **NRO KH-11 Orbital Pass Simulation**: Top-down orthorectified satellite optical imagery capturing recognizable landforms, ocean bathymetry, desert bedrock, mountain shadows, or runway corridors.
 - **Classified Header & Telemetry**: Overlaid with military KH-11 telemetry banners, coordinates, optical ground sample distance (GSD), and multispectral infrared thermal anomaly indicators.
-- **1-Click Export**: Instant download of `.jpg` satellite captures and re-generation capabilities.
+- **1-Click Export**: Instant download of `.jpg` satellite captures.
 
-### 6. Veo 3.1 Lite Tactical Event Video Simulation (`services/geminiService.ts`)
-- **Action-Cam Drone Flyover Prompting**: Formatted using standardized telemetry flight logs (`Telemetry Flight Log`, `Sensors: 3D Photogrammetry`, `Duration: 10s Orbital Heli-Sweep`, `360° Heli-Orbit`, `Pre-Rendered Corridors`, and `Incident Occurrence` landmarks).
-- **Scenery & Content Uniformity**: Feeds the Nano Banana Pro photographic reconstruction directly into the video engine as reference scenery, ensuring visual continuity between photo, terrain, and video.
-- **Dynamic Physics & Refraction**: Animates smooth 3D drone camera flyovers across the terrain, depicting the banking metallic craft with a translucent refractive gravitational lens distortion field around its hull.
-- **Classified Surveillance HUD**: Overlaid with corner metadata (`TOP SECRET // [SECTOR]`, `FRAME 84-OH 35MM-OPTICAL // 01:46 PM // F/2.8 1/500 ISO 3200`).
-- **Multi-Spectrum Switching**: Instant toggle between **Optical**, **FLIR Thermal**, and **NVG Night Vision** spectrum filters.
-- **Zero-Error Quota Fallback**: Gracefully catches restricted video tier responses and activates high-fidelity client-side canvas-rendered simulation without throwing errors.
-
-### 7. Neural Audio Briefings & Voice Synthesis (`services/geminiService.ts`, `utils/audioUtils.ts`)
+### 5. Neural Audio Briefings & Voice Synthesis (`services/geminiService.ts`, `utils/audioUtils.ts`)
 - **Gemini TTS Engine**: Real-time neural voice synthesis using `gemini-3.8-flash-lite-tts` with Journey voice personas (`Fenrir`, `Kore`, `Puck`, `Charon`, `Aoede`, etc.).
 - **RIFF Header Chunk Parsing**: Correctly parses RIFF/WAVE chunks to extract raw PCM audio data before concatenation, eliminating metallic screeching, pop artifacts, and mid-word audio truncation.
-- **Smart Speech Preparation**: Translates markdown headers, classification banners, and decimal numbers (`3 point 8 seconds`) into natural verbal speech.
+- **Smart Speech Preparation**: Translates markdown headers, classification banners, and decimal numbers into natural verbal speech.
+- **Direct Audio Download**: 1-click download of the complete audio briefing as a `.wav` file.
 
-### 8. Export Deck & Google Docs Synchronization
+### 6. YouTube 16:9 MP4 Video Export (`services/videoExportService.ts`)
+- **Client-Side In-Browser Synthesis**: Combines the high-resolution Nano Banana Pro photographic still image reconstruction with the neural audio briefing into a broadcast-ready 16:9 video.
+- **Dynamic Telemetry & Waveform HUD**: Animates a real-time audio oscilloscope/waveform visualizer reacting to the audio playback, incident coordinates, time counter, and classification banner.
+- **Direct YouTube Upload Ready**: Produces a standard `.mp4` video file ready to upload immediately to YouTube, X (Twitter), or broadcast archives.
+- **Live Progress & Cancellation**: Displays real-time rendering progress percentage with cancel capability.
+
+### 7. Export Deck & Google Docs Synchronization
+- **1-Click Google Docs Integration**: Direct export to Google Drive/Docs using client-side OAuth 2.0 without server proxies.
 - **Client-Side PDF Dossier Generation**: Formatted PDF export featuring declassified cover pages, military classification stamps, and embedded visual intelligence.
 - **Raw Markdown Export**: 1-click copy and `.md` file download.
-- **1-Click Google Docs Integration**: Direct export to Google Drive/Docs using client-side OAuth 2.0 without server proxies.
 
 ---
 
@@ -136,11 +128,11 @@ npm run build
 | **Frontend Framework** | React 19 + TypeScript 5.8 | Reactive component tree, hooks, and strict type safety |
 | **Build & Tooling** | Vite 6.2 | Ultra-fast bundling, HMR, and production tree-shaking |
 | **Styling & Theme** | Tailwind CSS v4 | Dark cyber tactical command UI with high-contrast CRT styling |
-| **3D Geospatial Engine** | HTML5 Canvas 2D/3D Math | Custom 3D Earth globe projection & tactical radar (zero map dependencies) |
+| **Sighting Geolocation** | Google Maps Platform | Embedded interactive Hybrid/Satellite/Vector maps in dossier modal |
 | **Generative Intelligence** | `@google/genai` (Gemini SDK) | Dossier text synthesis, Search Grounding, and reasoning |
 | **Photographic Surveillance**| Nano Banana Pro (`gemini-3-pro-image`) | 1K 16:9 photorealistic 35mm optical reconnaissance frames |
-| **Satellite Imagery** | Nano Banana Pro / Imagen 3 | Orthorectified top-down KH-11 military observation satellite imagery |
-| **Kinematic Video Sim** | Veo 3.1 Lite + HTML5 Canvas | Drone action-cam flyovers with refractive gravitational lens fields |
+| **Satellite Reconnaissance** | Nano Banana Pro / Imagen 3 | Orthorectified top-down KH-11 military observation satellite imagery |
+| **YouTube MP4 Video Synthesis** | Web Audio API + Canvas + MediaRecorder | In-browser 16:9 video synthesis with live waveform HUD for YouTube |
 | **Neural Speech Audio** | Gemini TTS + Journey Voices | Neural verbal briefings with clean RIFF PCM concatenation |
 | **Document Export** | jsPDF + Google Docs OAuth | Client-side classified PDF generation and cloud document synchronization |
 | **Security Architecture** | 100% Client-Side BYOK | `localStorage` sandbox, zero proxying, zero key transmission |

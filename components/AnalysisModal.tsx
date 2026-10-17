@@ -16,6 +16,7 @@ import {
 import { createWavBlob } from '../utils/audioUtils';
 import { createUAPDossierDoc } from '../services/googleDocsService';
 import { getAccessToken, googleSignIn } from '../services/authService';
+import { generateYouTubeVideo, VideoExportProgress } from '../services/videoExportService';
 import LoadingSpinner from './LoadingSpinner';
 import { 
   X, 
@@ -37,7 +38,8 @@ import {
   FileDown,
   Sparkles,
   RefreshCw,
-  Satellite
+  Satellite,
+  Video
 } from 'lucide-react';
 
 interface AnalysisModalProps {
@@ -94,6 +96,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
   const [isExportingDoc, setIsExportingDoc] = useState<boolean>(false);
   const [exportedDocUrl, setExportedDocUrl] = useState<string | null>(null);
   const [docsExportError, setDocsExportError] = useState<string | null>(null);
+
+  // YouTube MP4 Video export state
+  const [isExportingYouTubeVideo, setIsExportingYouTubeVideo] = useState<boolean>(false);
+  const [videoExportProgress, setVideoExportProgress] = useState<VideoExportProgress | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -318,6 +325,64 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    }
+  };
+
+  /**
+   * Generates a 16:9 HD video combining the Nano Banana Pro photographic still image
+   * with the spoken neural audio briefing and live HUD waveform for easy YouTube upload.
+   */
+  const handleExportYouTubeVideo = async () => {
+    if (!audioUrl) return;
+    const targetImg = visualUrl || satelliteUrl || article.thumbnail;
+    if (!targetImg) {
+      return;
+    }
+
+    setIsExportingYouTubeVideo(true);
+    setVideoExportProgress({ progress: 0, status: 'Initializing 16:9 YouTube video renderer...' });
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const { blob, filename } = await generateYouTubeVideo({
+        imageUrl: targetImg,
+        audioUrl,
+        article: {
+          title: article.title,
+          location: article.location,
+          coordinates: article.coordinates,
+          source: article.source,
+        },
+        voiceId,
+        onProgress: (p) => {
+          setVideoExportProgress(p);
+        },
+        abortSignal: controller.signal,
+      });
+
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err: any) {
+      if (!err?.message?.includes('cancelled')) {
+        console.error('Failed to export YouTube video:', err);
+      }
+    } finally {
+      setIsExportingYouTubeVideo(false);
+      setVideoExportProgress(null);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleCancelYouTubeExport = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
@@ -644,6 +709,19 @@ ${content}
               <span className="text-[10px] text-green-500/80 uppercase">
                 REF: {article.id}
               </span>
+              {article.url && (
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-green-950/70 hover:bg-green-700/80 text-green-300 border border-green-800/60 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider transition-colors shadow-sm"
+                  title="Open Original Source Document"
+                >
+                  <FileText size={10} className="text-green-400" />
+                  <span>Source: {article.source}</span>
+                  <ExternalLink size={10} />
+                </a>
+              )}
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-gray-100 tracking-tight leading-tight uppercase line-clamp-2">
               {article.title}
@@ -759,10 +837,19 @@ ${content}
                 </button>
                 <button
                   onClick={handleDownloadAudio}
-                  className="p-1 text-green-500 hover:text-green-300 border border-green-800 rounded"
-                  title="Download Audio Briefing (.wav)"
+                  className="p-1 text-green-500 hover:text-green-300 border border-green-800 rounded transition-colors"
+                  title="Download Raw Audio Briefing (.wav)"
                 >
                   <Download size={13} />
+                </button>
+                <button
+                  onClick={handleExportYouTubeVideo}
+                  disabled={isExportingYouTubeVideo}
+                  className="flex items-center gap-1.5 text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded font-bold uppercase tracking-wider transition-all shadow-[0_0_12px_rgba(239,68,68,0.4)] disabled:opacity-50 cursor-pointer"
+                  title="Export YouTube-Ready Video: 16:9 MP4 combining Nano Banana photo, audio briefing & telemetry waveform"
+                >
+                  <Video size={13} />
+                  <span>{isExportingYouTubeVideo ? 'Exporting MP4...' : 'Export YouTube (MP4)'}</span>
                 </button>
               </div>
             )}
@@ -863,114 +950,58 @@ ${content}
               </div>
             </div>
 
-            {/* 2. Veo 3.1 Lite Simulated Event Video Box */}
-            <div className="space-y-2">
+            {/* 2. Sighting Geolocation Telemetry (No External Maps API) */}
+            <div className="space-y-2.5 bg-black/70 p-3.5 rounded-lg border border-emerald-900/40">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Film size={14} className="text-purple-400 animate-pulse" />
-                  <h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest">
-                    Veo 3.1 Lite Event Video Simulation
+                  <MapPin size={14} className="text-emerald-400" />
+                  <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
+                    Incident Geolocation Telemetry
                   </h3>
                 </div>
-                <span className="text-[8px] bg-purple-950/80 text-purple-300 border border-purple-800/60 px-2 py-0.5 rounded">
-                  {videoResult?.modelUsed || 'Budget Tier: 720p // Low Latency'}
-                </span>
+                {article.source && (
+                  <span className="text-[9px] text-green-600 font-mono uppercase truncate max-w-[150px]">
+                    {article.source}
+                  </span>
+                )}
               </div>
 
-              <div className="relative aspect-video bg-gray-950 rounded-lg border border-purple-800/60 overflow-hidden flex flex-col items-center justify-center group shadow-xl">
-                {isVideoGenerating ? (
-                  <div className="flex flex-col items-center p-6 text-center">
-                    <LoadingSpinner />
-                    <span className="text-[10px] text-purple-400 mt-3 font-mono animate-pulse uppercase tracking-wider">
-                      Synthesizing Event Video via Veo 3.1 Lite...
-                    </span>
-                    <p className="text-[9px] text-purple-700/80 mt-1 max-w-xs font-sans">
-                      Rendering high-volume tactical kinematic maneuver simulation...
-                    </p>
-                  </div>
-                ) : videoResult?.videoUrl ? (
-                  <>
-                    <video
-                      ref={videoPlayerRef}
-                      src={videoResult.videoUrl}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="w-full h-full object-cover transition-all duration-300"
-                      style={{
-                        filter:
-                          spectrumMode === 'thermal'
-                            ? 'contrast(170%) saturate(150%) hue-rotate(180deg) invert(15%)'
-                            : spectrumMode === 'nightvision'
-                            ? 'hue-rotate(95deg) brightness(1.25) contrast(160%)'
-                            : 'none',
-                      }}
-                      onPlay={() => setIsVideoPlaying(true)}
-                      onPause={() => setIsVideoPlaying(false)}
-                    />
-                    <div className="absolute inset-0 pointer-events-none border border-purple-500/20 m-2"></div>
-                    <div className="absolute top-2 left-2 text-[8px] font-mono text-purple-300 uppercase bg-black/80 px-2 py-0.5 rounded border border-purple-800/60">
-                      VEO_SIM // {spectrumMode.toUpperCase()}
-                    </div>
+              <div className="space-y-2 pt-1 font-mono text-[11px]">
+                <div className="flex items-start justify-between gap-2 bg-emerald-950/20 p-2 rounded border border-emerald-900/30">
+                  <span className="text-emerald-500/70 uppercase text-[9px] tracking-wider">Sector Location</span>
+                  <span className="text-emerald-300 font-bold text-right">{article.location || 'Classified Maritime / Air Corridor'}</span>
+                </div>
 
-                    {/* Video Overlay Controls */}
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
-                      <div className="flex items-center gap-1 bg-black/85 px-1.5 py-0.5 rounded border border-purple-900/60 text-[8px]">
-                        <button
-                          onClick={() => setSpectrumMode('optical')}
-                          className={`px-1.5 py-0.5 rounded font-bold uppercase transition-colors ${
-                            spectrumMode === 'optical' ? 'bg-purple-600 text-white' : 'text-purple-400 hover:text-white'
-                          }`}
-                        >
-                          Optical
-                        </button>
-                        <button
-                          onClick={() => setSpectrumMode('thermal')}
-                          className={`px-1.5 py-0.5 rounded font-bold uppercase transition-colors ${
-                            spectrumMode === 'thermal' ? 'bg-purple-600 text-white' : 'text-purple-400 hover:text-white'
-                          }`}
-                        >
-                          FLIR
-                        </button>
-                        <button
-                          onClick={() => setSpectrumMode('nightvision')}
-                          className={`px-1.5 py-0.5 rounded font-bold uppercase transition-colors ${
-                            spectrumMode === 'nightvision' ? 'bg-purple-600 text-white' : 'text-purple-400 hover:text-white'
-                          }`}
-                        >
-                          NVG
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={handleDownloadVideo}
-                        className="px-2.5 py-1 bg-black/85 hover:bg-purple-600 hover:text-white text-purple-400 border border-purple-600 rounded text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-lg"
-                        title="Download Veo 3.1 Lite Simulated Video (.mp4)"
-                      >
-                        <Download size={11} />
-                        <span>Download Video</span>
-                      </button>
+                {article.coordinates && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-black/50 p-2 rounded border border-green-900/40">
+                      <div className="text-[9px] text-green-600 uppercase">Latitude</div>
+                      <div className="text-emerald-400 font-bold">{article.coordinates.lat.toFixed(4)}° N</div>
                     </div>
-                  </>
-                ) : (
-                  <div className="text-center p-6 flex flex-col items-center">
-                    <Film size={32} className="text-purple-900 mb-2 opacity-50" />
-                    <h4 className="text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-1">
-                      Tactical Event Video Simulation
-                    </h4>
-                    <p className="text-[9px] text-purple-400/80 mb-3 max-w-xs font-sans">
-                      Generate an affordable 720p simulated kinematic video of this incident using Veo 3.1 Lite.
-                    </p>
-                    <button
-                      onClick={handleGenerateVeoVideo}
-                      disabled={isVideoGenerating}
-                      className="px-3.5 py-1.5 bg-purple-950/80 hover:bg-purple-600 hover:text-white text-purple-300 border border-purple-600 rounded text-[9px] font-bold uppercase tracking-widest transition-all shadow-[0_0_12px_rgba(168,85,247,0.3)] flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Film size={12} />
-                      <span>Generate Veo 3.1 Lite Video</span>
-                    </button>
+                    <div className="bg-black/50 p-2 rounded border border-green-900/40">
+                      <div className="text-[9px] text-green-600 uppercase">Longitude</div>
+                      <div className="text-emerald-400 font-bold">{article.coordinates.lng.toFixed(4)}° W</div>
+                    </div>
                   </div>
+                )}
+
+                {article.proximateAddress && (
+                  <div className="flex items-start justify-between gap-2 bg-black/40 p-2 rounded border border-green-900/30">
+                    <span className="text-green-600 uppercase text-[9px] tracking-wider">Terrestrial Beacon</span>
+                    <span className="text-green-400/90 text-right text-[10px] truncate max-w-[210px]">{article.proximateAddress}</span>
+                  </div>
+                )}
+
+                {article.url && (
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 w-full bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 border border-emerald-800/50 hover:border-emerald-500 py-1.5 px-3 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
+                  >
+                    <ExternalLink size={11} />
+                    <span>View Primary Source Intel ({article.source || 'Declassified'})</span>
+                  </a>
                 )}
               </div>
             </div>
@@ -1139,6 +1170,52 @@ ${content}
           </div>
         </div>
         
+        {/* YouTube MP4 Video Export Progress Modal */}
+        {isExportingYouTubeVideo && (
+          <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-gray-950 border border-red-500/60 rounded-xl p-6 sm:p-8 max-w-md w-full shadow-[0_0_50px_rgba(239,68,68,0.25)] font-mono text-center space-y-5">
+              <div className="w-14 h-14 bg-red-600/20 border border-red-500 rounded-full flex items-center justify-center mx-auto text-red-500 animate-pulse">
+                <Video size={28} />
+              </div>
+
+              <div>
+                <h3 className="text-base font-bold text-gray-100 uppercase tracking-wider mb-1">
+                  Synthesizing YouTube 16:9 Video
+                </h3>
+                <p className="text-[11px] text-green-400">
+                  Rendering Nano Banana Pro still thumbnail + neural audio + live telemetry HUD
+                </p>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-[11px] text-gray-400 font-bold">
+                  <span>ENCODING STATUS</span>
+                  <span className="text-green-400 font-mono">{videoExportProgress?.progress || 0}%</span>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden border border-green-900/60 p-0.5">
+                  <div 
+                    className="bg-gradient-to-r from-red-500 via-green-500 to-emerald-400 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${videoExportProgress?.progress || 0}%` }}
+                  ></div>
+                </div>
+                <p className="text-[10px] text-green-500 truncate">
+                  {videoExportProgress?.status || 'Encoding broadcast frames...'}
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-green-900/40">
+                <button
+                  onClick={handleCancelYouTubeExport}
+                  className="px-4 py-2 bg-gray-800 hover:bg-red-900/40 hover:text-red-400 text-gray-400 text-xs font-bold uppercase tracking-wider rounded border border-gray-700 hover:border-red-800 transition-colors"
+                >
+                  Cancel Export
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hidden Audio Element */}
         {audioUrl && (
           <audio 

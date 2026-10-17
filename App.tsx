@@ -6,7 +6,6 @@ import AnalysisModal from './components/AnalysisModal';
 import ApiKeyModal from './components/ApiKeyModal';
 import LoadingSpinner from './components/LoadingSpinner';
 import AjarnSpencerCredit from './components/AjarnSpencerCredit';
-import UAPTacticalMap from './components/UAPTacticalMap';
 import GoogleDocsModal from './components/GoogleDocsModal';
 import { 
   RefreshCw, 
@@ -15,9 +14,7 @@ import {
   ChevronLeft, 
   ChevronRight, 
   LogOut, 
-  Radar,
   LayoutGrid,
-  Columns,
   FileText,
   Key
 } from 'lucide-react';
@@ -25,8 +22,6 @@ import {
 const VOICES: VoiceID[] = ['Fenrir', 'Kore', 'Charon', 'Aoede', 'Zephyr', 'Puck', 'Leda', 'Orus'];
 const PAGE_SIZE_OPTIONS = [9, 18, 27, 45, 99];
 const STORAGE_KEY = 'UAP_NEXUS_KEY';
-
-type ViewMode = 'map' | 'cards' | 'split';
 
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -36,9 +31,6 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<VoiceID>('Fenrir');
   
-  // Tactical View Mode
-  const [viewMode, setViewMode] = useState<ViewMode>('map');
-
   // Modals State
   const [isDocsModalOpen, setIsDocsModalOpen] = useState<boolean>(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
@@ -47,11 +39,16 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(9);
 
-  // Initialize BYOK Key
+  // Initialize BYOK Key (from localStorage or environment)
   useEffect(() => {
     const storedKey = localStorage.getItem(STORAGE_KEY);
     if (storedKey) {
       setApiKey(storedKey);
+    } else {
+      const envKey = (typeof process !== 'undefined' && (process.env?.GEMINI_API_KEY || process.env?.API_KEY)) || null;
+      if (envKey && envKey.trim().length > 10) {
+        setApiKey(envKey.trim());
+      }
     }
   }, []);
 
@@ -76,13 +73,13 @@ const App: React.FC = () => {
       setArticles(newsArticles);
       setCurrentPage(1); // Reset to first page on new fetch
     } catch (err: any) {
-      const errorMessage = err.message || 'Unknown error occurred';
-      if (errorMessage.includes('401') || errorMessage.includes('key')) {
-         setError('Authentication failed. The provided API key is rejected by the satellite link.');
+      const errorMessage = err?.message || 'Unknown error occurred';
+      if (errorMessage.includes('401') || errorMessage.includes('key not valid') || errorMessage.includes('API_KEY_INVALID')) {
+         setError('Authentication failed: The provided API key was not recognized or is unauthorized. Check your key in Access Credentials.');
       } else {
-         setError('Connection to UAP Grid lost. Retrying secure handshake...');
+         setError(`Grid sync notice: ${errorMessage}`);
       }
-      console.error(err);
+      console.error("Intel Grid Load Error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -178,52 +175,21 @@ const App: React.FC = () => {
           <p className="text-emerald-400/70 tracking-[0.4em] text-xs uppercase font-bold">Clearance Level: Top Secret // Ajarn Spencer Littlewood</p>
         </header>
 
-        {/* Tactical View Mode Switcher */}
+        {/* Dossier Workstation Status Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-black/70 p-3 sm:p-4 rounded-xl border border-green-800/40 backdrop-blur-md shadow-lg">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-green-700 uppercase font-bold tracking-widest hidden sm:inline">
-              OPERATIONAL VIEW:
+            <LayoutGrid size={16} className="text-green-400" />
+            <span className="text-xs text-green-300 font-bold uppercase tracking-widest">
+              INTELLIGENCE DOSSIER DECK
             </span>
-            <div className="flex items-center gap-1 bg-gray-900/80 p-1 rounded-lg border border-green-900/60">
-              <button
-                onClick={() => setViewMode('map')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all ${
-                  viewMode === 'map'
-                    ? 'bg-green-600 text-black shadow-[0_0_12px_rgba(34,197,94,0.4)]'
-                    : 'text-green-500 hover:text-green-300'
-                }`}
-              >
-                <Radar size={12} />
-                Tactical Radar
-              </button>
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all ${
-                  viewMode === 'cards'
-                    ? 'bg-green-600 text-black shadow-[0_0_12px_rgba(34,197,94,0.4)]'
-                    : 'text-green-500 hover:text-green-300'
-                }`}
-              >
-                <LayoutGrid size={12} />
-                Intel Dossiers
-              </button>
-              <button
-                onClick={() => setViewMode('split')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all ${
-                  viewMode === 'split'
-                    ? 'bg-green-600 text-black shadow-[0_0_12px_rgba(34,197,94,0.4)]'
-                    : 'text-green-500 hover:text-green-300'
-                }`}
-              >
-                <Columns size={12} />
-                Split Command
-              </button>
-            </div>
+            <span className="text-[10px] text-green-700 hidden sm:inline">
+              · REAL-TIME SENSOR REPORTS & DECLASSIFIED ARCHIVES
+            </span>
           </div>
 
           <div className="text-[10px] text-green-500 font-bold uppercase tracking-wider flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span>RADAR SENSORS: ONLINE</span>
+            <span>INTELLIGENCE LINK: SYNCHRONIZED</span>
           </div>
         </div>
 
@@ -293,78 +259,77 @@ const App: React.FC = () => {
             <LoadingSpinner />
             <p className="text-green-500/80 animate-pulse font-mono text-xs uppercase tracking-[0.4em]">SCANNING GLOBAL RADAR FREQUENCIES...</p>
           </div>
-        ) : error ? (
-          <div className="text-center text-red-400 bg-red-900/10 border border-red-900/50 p-8 rounded-lg max-w-2xl mx-auto">
+        ) : error && articles.length === 0 ? (
+          <div className="text-center text-red-400 bg-red-900/10 border border-red-900/50 p-8 rounded-lg max-w-2xl mx-auto space-y-4">
             <p className="font-mono text-sm leading-relaxed">{error}</p>
-            <button onClick={handleClearKey} className="mt-4 text-[10px] text-red-500 underline uppercase tracking-widest">Update Access Credentials</button>
+            <div className="flex flex-wrap justify-center gap-3 pt-2">
+              <button
+                onClick={loadIntel}
+                className="px-4 py-2 bg-green-500 hover:bg-green-400 text-black font-bold text-xs uppercase tracking-wider rounded transition-all cursor-pointer"
+              >
+                Retry Grid Handshake
+              </button>
+              <button
+                onClick={() => setIsApiKeyModalOpen(true)}
+                className="px-4 py-2 bg-black/60 hover:bg-black/90 border border-green-800 hover:border-green-500 text-green-400 text-xs uppercase tracking-wider rounded transition-all cursor-pointer"
+              >
+                Check / Edit API Key
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-10">
-            {/* Tactical Radar Grid View (Shown in 'map' or 'split' mode) */}
-            {(viewMode === 'map' || viewMode === 'split') && (
-              <div className="space-y-3">
-                <UAPTacticalMap
-                  articles={articles}
-                  selectedArticle={selectedArticle}
-                  onSelectArticle={setSelectedArticle}
-                  onOpenDossier={handleOpenDossier}
-                />
+          <div className="space-y-8">
+            {error && (
+              <div className="flex items-center justify-between bg-yellow-950/40 border border-yellow-700/50 text-yellow-400 px-4 py-3 rounded-lg text-xs font-mono">
+                <span>{error}</span>
+                <button 
+                  onClick={() => setError(null)} 
+                  className="text-yellow-600 hover:text-yellow-300 ml-4 font-bold uppercase tracking-wider cursor-pointer"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
+            {/* Intel Article Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {currentArticles.map((article) => (
+                <ArticleCard 
+                  key={article.id} 
+                  article={article} 
+                  onAnalyze={handleOpenDossier}
+                />
+              ))}
+            </div>
 
-            {/* Intel Article Cards Grid (Shown in 'cards' or 'split' mode) */}
-            {(viewMode === 'cards' || viewMode === 'split') && (
-              <div className="space-y-8">
-                {viewMode === 'split' && (
-                  <div className="flex items-center gap-3 border-b border-green-800/40 pb-3">
-                    <LayoutGrid size={18} className="text-green-400" />
-                    <h3 className="text-sm font-bold uppercase tracking-[0.25em] text-green-300">
-                      INTERCEPTED DOSSIER FEED
-                    </h3>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {currentArticles.map((article) => (
-                    <ArticleCard 
-                      key={article.id} 
-                      article={article} 
-                      onAnalyze={handleOpenDossier}
-                    />
-                  ))}
+            {/* Pagination Controls */}
+            {articles.length > 0 && (
+                <div className="mt-12 flex justify-center items-center gap-4">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-full border border-green-700 text-green-400 hover:bg-green-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    
+                    <span className="text-green-500 font-mono text-sm uppercase tracking-widest">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded-full border border-green-700 text-green-400 hover:bg-green-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                        <ChevronRight size={24} />
+                    </button>
                 </div>
-
-                {/* Pagination Controls */}
-                {articles.length > 0 && (
-                    <div className="mt-12 flex justify-center items-center gap-4">
-                        <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="p-2 rounded-full border border-green-700 text-green-400 hover:bg-green-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-                        
-                        <span className="text-green-500 font-mono text-sm uppercase tracking-widest">
-                            Page {currentPage} of {totalPages}
-                        </span>
-                        
-                        <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            className="p-2 rounded-full border border-green-700 text-green-400 hover:bg-green-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                        >
-                            <ChevronRight size={24} />
-                        </button>
-                    </div>
-                )}
-                
-                {articles.length > 0 && (
-                    <div className="text-center mt-4 text-[10px] text-green-900 uppercase tracking-[0.5em] font-bold">
-                        Transmission Packet Count: {articles.length}
-                    </div>
-                )}
-              </div>
+            )}
+            
+            {articles.length > 0 && (
+                <div className="text-center mt-4 text-[10px] text-green-900 uppercase tracking-[0.5em] font-bold">
+                    Transmission Packet Count: {articles.length}
+                </div>
             )}
             
             {articles.length === 0 && !isLoading && !error && (

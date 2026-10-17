@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan to streamline UAP Intel Nexus into a single-view Intel Dossiers workstation, eliminating the 3D globe and tactical radar, embedding Google Maps directly inside the dossier modal, and adding client-side MP4 video export with Nano Banana still thumbnails for YouTube uploads.",
+  "updatedAt": "2026-10-16T19:43:27.721954585Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
