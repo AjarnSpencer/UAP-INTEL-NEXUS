@@ -709,6 +709,26 @@ ${content}
               <span className="text-[10px] text-green-500/80 uppercase">
                 REF: {article.id}
               </span>
+              {article.sourceRegion && (
+                <span className="text-[9px] bg-sky-950/80 text-sky-300 border border-sky-800/60 px-2 py-0.5 rounded uppercase font-mono">
+                  {article.sourceRegion}
+                </span>
+              )}
+              {article.reportType && (
+                <span className="text-[9px] bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 px-2 py-0.5 rounded uppercase font-mono">
+                  {article.reportType}
+                </span>
+              )}
+              {article.evidenceTier && (
+                <span className="text-[9px] bg-black/90 text-amber-300 border border-amber-800/60 px-2 py-0.5 rounded uppercase font-mono">
+                  {article.evidenceTier}
+                </span>
+              )}
+              {article.originalLanguage && article.originalLanguage !== 'English' && (
+                <span className="text-[9px] bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 px-2 py-0.5 rounded uppercase font-mono">
+                  Lang: {article.originalLanguage}
+                </span>
+              )}
               {article.url && (
                 <a
                   href={article.url}
@@ -726,6 +746,11 @@ ${content}
             <h2 className="text-xl sm:text-2xl font-black text-gray-100 tracking-tight leading-tight uppercase line-clamp-2">
               {article.title}
             </h2>
+            {article.originalTitle && article.originalTitle !== article.title && (
+              <p className="text-xs text-green-400/70 italic mt-0.5 font-mono">
+                Original Headline ({article.originalLanguage || 'Native'}): «{article.originalTitle}»
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="text-green-800 hover:text-red-500 transition-colors p-1 shrink-0" title="Close Dossier">
             <X size={28} />
@@ -985,6 +1010,26 @@ ${content}
                   </div>
                 )}
 
+                {/* Date Breakdown: Observed vs Published */}
+                {(article.publishedAt || article.observedAt) && (
+                  <div className="grid grid-cols-2 gap-2 bg-black/40 p-2 rounded border border-green-900/30">
+                    <div>
+                      <div className="text-[9px] text-green-600 uppercase">Published / Recorded</div>
+                      <div className="text-emerald-400 font-bold text-[10px]">
+                        {article.publishedAt ? new Date(article.publishedAt).toISOString().split('T')[0] : 'Rolling 48h UTC'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-amber-500 uppercase">Physical Sighting</div>
+                      <div className="text-amber-300 font-bold text-[10px]">
+                        {article.observedAt ? (
+                          article.observedAt.includes('T') ? article.observedAt.split('T')[0] : article.observedAt
+                        ) : 'Coincident with release'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {article.proximateAddress && (
                   <div className="flex items-start justify-between gap-2 bg-black/40 p-2 rounded border border-green-900/30">
                     <span className="text-green-600 uppercase text-[9px] tracking-wider">Terrestrial Beacon</span>
@@ -1002,6 +1047,29 @@ ${content}
                     <ExternalLink size={11} />
                     <span>View Primary Source Intel ({article.source || 'Declassified'})</span>
                   </a>
+                )}
+
+                {/* Grounding Source Citations (Web Search Grounding) */}
+                {article.groundingCitations && article.groundingCitations.length > 0 && (
+                  <div className="pt-1 border-t border-emerald-900/30">
+                    <span className="text-[9px] text-green-700 uppercase font-bold block mb-1">
+                      Corroborating Web Search Citations:
+                    </span>
+                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                      {article.groundingCitations.map((citation, citIdx) => (
+                        <a
+                          key={citIdx}
+                          href={citation.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[9px] text-cyan-400/80 hover:text-cyan-200 truncate hover:underline"
+                        >
+                          <ExternalLink size={9} className="shrink-0" />
+                          <span className="truncate">{citation.title || citation.url}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

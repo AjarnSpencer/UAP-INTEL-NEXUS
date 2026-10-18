@@ -172,6 +172,77 @@ export function resolveLocationFromText(title: string, description: string): {
     };
   }
 
+  if (combined.includes('france') || combined.includes('geipan') || combined.includes('toulouse') || combined.includes('cnes')) {
+    return {
+      location: 'GEIPAN Aerospace Surveillance Sector, Toulouse, France',
+      coordinates: { lat: 43.5627, lng: 1.4828 },
+      proximateAddress: '18 Avenue Edouard Belin, 31400 Toulouse, France',
+    };
+  }
+  if (combined.includes('brazil') || combined.includes('colares') || combined.includes('brasilia') || combined.includes('varginha') || combined.includes('arquivo nacional')) {
+    return {
+      location: 'Colares Maritime Coastal Vector / Brasília Air Defense Sector, Brazil',
+      coordinates: { lat: -0.9333, lng: -48.2833 },
+      proximateAddress: 'Praça do Pescador, Colares - PA, 68785-000, Brazil',
+    };
+  }
+  if (combined.includes('mexico') || combined.includes('popocat') || combined.includes('afac') || combined.includes('seneam')) {
+    return {
+      location: 'Popocatépetl Volcanic Aerospace Corridor, Puebla, Mexico',
+      coordinates: { lat: 19.0224, lng: -98.6279 },
+      proximateAddress: 'Parque Nacional Iztaccíhuatl-Popocatépetl, Mexico',
+    };
+  }
+  if (combined.includes('chile') || combined.includes('cefaa') || combined.includes('dgac') || combined.includes('santiago') || combined.includes('andes')) {
+    return {
+      location: 'CEFAA Andean Trans-Medium Sector, Santiago, Chile',
+      coordinates: { lat: -33.4489, lng: -70.6693 },
+      proximateAddress: 'Av. Providencia 2008, Santiago, Providencia, Región Metropolitana, Chile',
+    };
+  }
+  if (combined.includes('japan') || combined.includes('tokyo') || combined.includes('fukushima') || combined.includes('okinawa') || combined.includes('defense ministry')) {
+    return {
+      location: 'Ministry of Defense UAP Tracking Corridor, Tokyo / Honshu, Japan',
+      coordinates: { lat: 35.6938, lng: 139.7289 },
+      proximateAddress: 'Ichigayahonmuracho, Shinjuku City, Tokyo 162-0845, Japan',
+    };
+  }
+  if (combined.includes('korea') || combined.includes('seoul') || combined.includes('mnd')) {
+    return {
+      location: 'DMZ Aerospace Surveillance Vector, Seoul, South Korea',
+      coordinates: { lat: 37.5326, lng: 126.9745 },
+      proximateAddress: 'Yongsan-gu, Seoul, South Korea',
+    };
+  }
+  if (combined.includes('india') || combined.includes('ladakh') || combined.includes('himalaya') || combined.includes('delhi')) {
+    return {
+      location: 'High-Altitude Himalayan Radar Grid, Ladakh, India',
+      coordinates: { lat: 34.1526, lng: 77.5771 },
+      proximateAddress: 'Leh Airfield Sector, Ladakh 194101, India',
+    };
+  }
+  if (combined.includes('australia') || combined.includes('woomera') || combined.includes('pine gap') || combined.includes('canberra')) {
+    return {
+      location: 'Pine Gap / Woomera Aerospace Range, Northern Territory, Australia',
+      coordinates: { lat: -23.7986, lng: 133.7374 },
+      proximateAddress: 'Hatfield Hwy, Alice Springs NT 0870, Australia',
+    };
+  }
+  if (combined.includes('new zealand') || combined.includes('kaikoura') || combined.includes('wellington')) {
+    return {
+      location: 'Kaikoura Maritime Observation Vector, South Island, New Zealand',
+      coordinates: { lat: -42.4000, lng: 173.6833 },
+      proximateAddress: 'Kaikoura Coastal Sector, Canterbury 7300, New Zealand',
+    };
+  }
+  if (combined.includes('aguadilla') || combined.includes('puerto rico')) {
+    return {
+      location: 'Aguadilla Coastal Transition Sector, Puerto Rico',
+      coordinates: { lat: 18.4949, lng: -67.1294 },
+      proximateAddress: 'Rafael Hernandez Airport, Aguadilla 00603, Puerto Rico',
+    };
+  }
+
   // Default tactical epicenter (Rachel / Area 51 / Extraterrestrial Hwy)
   return {
     location: 'Groom Lake / Rachel Radar Perimeter, NV',
