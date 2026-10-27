@@ -257,11 +257,11 @@ const App: React.FC = () => {
                 <span className={`text-[9px] px-1.5 py-0.2 rounded border uppercase font-mono ${
                   isViewingArchives ? 'bg-amber-950/80 text-amber-300 border-amber-800/60' : 'bg-emerald-950/80 text-emerald-300 border-emerald-800/60'
                 }`}>
-                  {isViewingArchives ? 'Historical Declassified Mode' : '48h Rolling UTC Stream'}
+                  {isViewingArchives ? 'Historical Declassified Mode' : '5-Sector Concurrent Stream'}
                 </span>
               </div>
               <div className="text-[10px] text-green-600/90 font-mono mt-0.5">
-                Targeting MUFON · NUFORC · AARO.mil · The Debrief · GEIPAN · FAB Brazil · Japan MoD · CEFAA · UK CAA
+                Americas · Europe · Asia · Oceania · Africa & Middle East (MUFON, NUFORC, AARO.mil, GEIPAN, FAB Brazil, Japan MoD, CEFAA, UK CAA)
               </div>
             </div>
           </div>
@@ -459,8 +459,8 @@ const App: React.FC = () => {
         {isLoading ? (
           <div className="flex flex-col justify-center items-center h-64 gap-4">
             <LoadingSpinner />
-            <p className="text-green-500/80 animate-pulse font-mono text-xs uppercase tracking-[0.4em]">
-              SEARCHING MULTILINGUAL RADAR & AVIATION REGISTRIES (48H ROLLING UTC)...
+            <p className="text-green-500/80 animate-pulse font-mono text-xs uppercase tracking-[0.3em] text-center max-w-xl">
+              SCANNING MULTI-SECTOR GLOBAL REGISTRIES IN PARALLEL (AMERICAS, EUROPE, ASIA, OCEANIA, MIDDLE EAST)...
             </p>
           </div>
         ) : error && articles.length === 0 ? (
@@ -471,7 +471,7 @@ const App: React.FC = () => {
                 onClick={loadIntel}
                 className="px-4 py-2 bg-green-500 hover:bg-green-400 text-black font-bold text-xs uppercase tracking-wider rounded transition-all cursor-pointer"
               >
-                Retry 48h Grid Scan
+                Retry Multi-Sector Scan
               </button>
               <button
                 onClick={loadHistoricalArchives}
@@ -501,17 +501,17 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Empty State when 0 reports found in 48-hour window */}
+            {/* Empty State when 0 reports found */}
             {articles.length === 0 && !isLoading && (
               <div className="text-center bg-black/60 border border-green-900/50 p-10 rounded-xl max-w-2xl mx-auto space-y-4">
                 <div className="w-12 h-12 mx-auto rounded-full bg-green-950/80 border border-green-700/60 flex items-center justify-center text-green-400">
                   <Radar size={24} className="animate-pulse" />
                 </div>
                 <h3 className="text-base font-bold text-green-400 uppercase tracking-widest font-mono">
-                  0 Qualifying UAP Incidents in 48-Hour UTC Window
+                  Awaiting Global Dossier Stream
                 </h3>
                 <p className="text-xs text-green-500/70 leading-relaxed font-mono">
-                  The international search grounding pipeline queried candidate defense, civil aviation, and scientific registries (MUFON, NUFORC, AARO.mil, GEIPAN, FAB Brazil, Japan MoD, UK CAA). No verified incidents or new reports met the strict rolling 48-hour publication threshold.
+                  The multi-vector discovery engine queries candidate defense, civil aviation, and scientific registries (MUFON, NUFORC, AARO.mil, GEIPAN, FAB Brazil, Japan MoD, UK CAA) across 5 concurrent worldwide sectors.
                 </p>
                 <div className="flex flex-wrap justify-center gap-3 pt-3">
                   <button
@@ -526,7 +526,7 @@ const App: React.FC = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-black/70 hover:bg-green-950/60 text-green-400 border border-green-800 text-xs uppercase tracking-wider rounded transition-all cursor-pointer"
                   >
                     <RefreshCw size={12} />
-                    <span>Rescan Live Grid</span>
+                    <span>Run Multi-Sector Scan</span>
                   </button>
                 </div>
               </div>

@@ -1,9 +1,7 @@
 {
   "name": "UAP Intel Nexus",
   "description": "Tactical UAP intelligence dossiers workstation with Nano Banana Pro photographic & satellite reconnaissance imagery, Journey neural voice briefings, and 1-click YouTube MP4 video export.",
-  "requestFramePermissions": [
-    "geolocation"
-  ],
+  "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]

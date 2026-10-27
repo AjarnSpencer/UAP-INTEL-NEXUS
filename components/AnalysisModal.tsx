@@ -975,13 +975,13 @@ ${content}
               </div>
             </div>
 
-            {/* 2. Sighting Geolocation Telemetry (No External Maps API) */}
+            {/* 2. Sighting Coordinates & Sector Telemetry (Data-driven, No User Geolocation / No External Maps API) */}
             <div className="space-y-2.5 bg-black/70 p-3.5 rounded-lg border border-emerald-900/40">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MapPin size={14} className="text-emerald-400" />
                   <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
-                    Incident Geolocation Telemetry
+                    Incident Sighting Coordinates & Sector Telemetry
                   </h3>
                 </div>
                 {article.source && (

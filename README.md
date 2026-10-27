@@ -65,9 +65,15 @@ To safeguard user privacy and protect sensitive investigative dossiers, UAP Inte
    └───────────────────────────┘                  └───────────────────────────┘
 ```
 
-### 1. Global UAP Discovery Pipeline (`services/newsService.ts`)
-- **Native Gemini Google Search Grounding**: Implemented using the current `@google/genai` TypeScript SDK with `{ tools: [{ googleSearch: {} }] }`—eliminating all fragile HTML page scraping.
-- **Strict Rolling 48-Hour UTC Window**: Automatically calculates dynamic rolling UTC bounds (`[now - 48h] → [now]`). It rejects stale articles, prevents newly indexed historical files from being disguised as recent events, and outputs a strict empty set (`[]`) when no reports meet the cutoff rather than hallucinating incidents.
+### 1. Global Multi-Sector UAP Discovery Pipeline (`services/newsService.ts`)
+- **Concurrent 5-Sector Search Grounding**: Implemented using the modern `@google/genai` TypeScript SDK with `{ tools: [{ googleSearch: {} }] }`—eliminating all fragile HTML page scraping. Rather than issuing a single monolithic query that risks sparse results, the pipeline dispatches 5 concurrent targeted discovery sectors across the globe:
+  1. *North America Command & Databases* (MUFON, NUFORC, AARO.mil, NASA, The Debrief, FAA pilot incident reports)
+  2. *Europe Aerospace & Defence* (France GEIPAN/CNES, UK CAA & MoD, ESA, European aviation radars)
+  3. *Latin America Defence & Aviation* (Brazil FAB & Arquivo Nacional, Mexico SENEAM/AFAC, Chile CEFAA, Argentina, Peru)
+  4. *Asia, Oceania, Africa & Middle East* (Japan MoD UAP Caucus, South Korea MND, Indian Air Force, Australia RAAF, NZ Archives)
+  5. *Global Breaking & Scientific Investigations* (SCU multi-sensor tracks, Galileo Project, cockpit recordings, radar intercepts)
+- **High-Density Dossier Yield & Rolling 48-Hour UTC Telemetry**: Gathers and combines active dossiers across all global sectors, dynamically tracking the rolling 48-hour UTC window while preserving active incident filings, newly cataloged witness logs, and ongoing investigations so the intelligence grid remains richly populated with 20–35+ dossiers.
+- **Resilient Balanced-Brace JSON Parser**: Features a fault-tolerant JSON parser that gracefully handles markdown wrappers, trailing commas, and multi-line structures, ensuring zero dropped records.
 - **Deduplication & URL Validation**: Normalizes and deduplicates incoming reports across multiple wires by canonical URL, title similarity, and source authority.
 - **Programmatic Citation Extraction**: Extracts live grounding chunks (`candidate.groundingMetadata.groundingChunks`) from Google Search results to pair every report with authentic web links.
 
@@ -93,9 +99,10 @@ The discovery engine continuously monitors authorized, primary, and corroboratin
 - **Live Search**: Instant keyword filtering across titles, original foreign headlines, descriptions, geographical sectors, and agency names.
 - **Density Control & Pagination**: Configurable display density (9, 18, 27, 45, or 99 dossiers per packet).
 
-### 5. Tactical Incident Geolocation Telemetry (`components/AnalysisModal.tsx`, `services/mapsService.ts`)
+### 5. Tactical Incident Sighting Coordinates & Sector Telemetry (`components/AnalysisModal.tsx`, `services/mapsService.ts`)
+- **Zero End-User Geolocation Tracking**: The application strictly never requests end-user GPS or browser geolocation permissions (`requestFramePermissions: []`). All coordinates represent the reported incident/sighting location parsed directly from intelligence reports.
 - **Self-Contained Sector Telemetry**: Completely eliminates external Google Maps SDK dependencies, third-party trackers, and API billing requirements in favor of a clean, tactical coordinate deck.
-- **Precise Coordinates**: Displays latitude and longitude down to 4 decimal places, operational sector names, and terrestrial proximity beacons.
+- **Precise Sighting Coordinates**: Displays latitude and longitude down to 4 decimal places, operational sector names, and terrestrial proximity beacons.
 - **Primary Source Intel Links**: Direct one-click access to original source URLs, government documents, and declassified files.
 - **Corroborating Web Citations**: Displays clickable grounding citations extracted by Google Search Grounding for immediate source verification.
 
